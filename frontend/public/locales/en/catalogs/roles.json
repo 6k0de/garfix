@@ -1,0 +1,49 @@
+{
+  "title": "Role Catalog",
+  "subtitle": "Manage system roles and permissions",
+  "buttnNewRole": "New role",
+  "table": {
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "users": "Users"
+    },
+    "noData": "No roles found",
+    "loading": "Loading..."
+  },
+  "formNewRoleLabel": {
+    "title": "New role",
+    "nameInput": "Name",
+    "descriptionInput": "Description",
+    "saveButton": "Saving..."
+  },
+  "formPlaceholder": {
+    "nameInput": "Role name",
+    "descriptionInput": "Role description"
+  },
+  "formEditRole": {
+    "title": "Edit role",
+    "nameInput": "Name",
+    "descriptionInput": "Description",
+    "saveButton": "Save",
+    "editButton": "Edit role"
+  },
+  "formDelete": {
+    "title": "Confirm deletion",
+    "message": "Are you sure you want to delete the role <strong>{{role}}</strong>?",
+    "titleWarning": "Warning",
+    "warningMessage": "This role is assigned to <strong>{{number}}</strong> users. Deleting it will remove their associated permissions.",
+    "success": "Record deleted successfully",
+    "error": "Error deleting record",
+    "confirmButton": "Delete",
+    "confirmButtonCancel": "Deleting..."
+  },
+  "message": {
+    "successCreate": "Role created successfully",
+    "errorCreate": "Failed to create the role",
+    "successUpdate": "Role updated successfully",
+    "errorUpdate": "Error updating the role",
+    "successDelete": "Role deleted successfully",
+    "errorDelete": "Failed to delete the role"
+  }
+}

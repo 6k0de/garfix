@@ -1,0 +1,42 @@
+{
+  "title": "Status Catalog",
+  "subtitle": "Manage statuses for your services and work orders",
+  "buttonNewStatus": "New status",
+  "table": {
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "usedOn": "Used in"
+    },
+    "noDescriptions": "No description",
+    "noData": "No statuses found",
+    "loading": "Loading...",
+     "title": "Delete",
+    "deleteTitle": "Cannot be deleted because it is in use"
+  },
+  "formNewStatus": {
+    "title": "New status",
+    "nameInput": "Name",
+    "descriptionInput": "Description",
+    "createStatus": "There is already a status with this name",
+    "saveButton": "Save"
+  },
+  "formPlaceholder": {
+    "nameInput": "Status name",
+    "descriptionInput": "Status description"
+  },
+  "formEditStatus": {
+    "title": "Edit status",
+    "nameInput": "Name",
+    "descriptionInput": "Description",
+    "saveButton": "Save"
+  },
+  "formDelete": {
+    "title": "Confirm deletion",
+    "message": "Are you sure you want to delete the status <strong>{{status}}</strong>?",
+    "success": "Record deleted successfully",
+    "error": "Error deleting record",
+    "confirmButton": "Delete",
+    "confirmButtonCancel": "Deleting..."
+  }
+}

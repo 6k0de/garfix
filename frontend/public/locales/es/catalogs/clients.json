@@ -1,0 +1,46 @@
+{
+    "title": "Catálogo de Clientes",
+    "subtitle": "Administra la información de tus clientes",
+    "newBotton": "Nuevo Cliente",
+    "form": {
+        "validations": {
+            "name": "El nombre es requerido",
+            "phone": "El teléfono es requerido",
+            "email": "El correo electrónico no es válido",
+            "typeClient": "El tipo de cliente es requerido",
+            "documentType": "El tipo de documento es requerido"
+        },
+        "newFields": {
+            "name": "Nombre completo",
+            "namePlaceholder": "Nombre completo o razón social",
+            "phone": "Teléfono",
+            "phonePlaceholder": "Número de teléfonico",
+            "email": "Correo electrónico",
+            "emailPlaceholder": "correo@ejemplo.com",
+            "address": "Dirección",
+            "addressPlaceholder": "Dirección completa",
+            "clientType": "Tipo de cliente",
+            "documentType": "Tipo de documento"
+        }
+    },
+    "table": {
+        "columns": {
+            "client": "Cliente",
+            "contact": "Contacto",
+            "typeClient": "Tipo de cliente",
+            "documentTyoe": "Tipo de documento",
+            "services": "Servicios"
+        },
+        "noData": "No hay clientes registrados"
+    },
+    "modal": {
+        "new": "Nuevo Cliente",
+        "edit": "Editar Cliente"
+    },
+    "formDelete": {
+        "title": "Confirmar Eliminación",
+        "message": "¿Estás seguro de que deseas eliminar al cliente <strong>{{client}}</strong>?",
+        "delete": "Eliminar",
+        "deleting": "Eliminando..."
+    }
+}

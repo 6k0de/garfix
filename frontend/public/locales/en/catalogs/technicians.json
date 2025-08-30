@@ -1,0 +1,47 @@
+{
+    "title": "Technicians Catalog",
+    "subtitle": "Manage the company's technical staff",
+    "newBotton": "New Technician",
+    "form": {
+        "validations": {
+            "name": "Name is required",
+            "branch": "Branch is required",
+            "role": "Role is required"
+        },
+        "formNewFields": {
+            "name": "Full name",
+            "namePlaceholder": "Technician's full name",
+            "email": "Email address",
+            "emailPlaceholder": "email@example.com",
+            "branch": "Branch",
+            "role": "Role"
+        }
+    },
+    "table": {
+        "columns": {
+            "technic": "Technician",
+            "contact": "Contact",
+            "numService": "No. of Services",
+            "role": "Role"
+        },
+        "noData": "No technicians registered"
+    },
+    "modal": {
+        "new": "New Technician",
+        "edit": "Edit Technician"
+    },
+    "formDelete": {
+        "title": "Confirm Deletion",
+        "message": "Are you sure you want to delete technician <strong>{{technic}}</strong>?",
+        "delete": "Delete",
+        "deleting": "Deleting..."
+    },
+    "message": {
+      "successCreate": "Technician created successfully",
+      "errorCreate": "Failed to create Technician",
+      "successUpdate": "Technician updated successfully",
+      "errorUpdate": "Error updating Technician",
+      "successDelete": "Technician deleted successfully",
+      "errorDelete": "Failed to delete Technician"
+    }
+}

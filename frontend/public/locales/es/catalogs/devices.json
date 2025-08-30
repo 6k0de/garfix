@@ -1,0 +1,52 @@
+{
+  "title": "Catálogo de dispositivos",
+  "subtitle": "Gestiona los dispositivos disponibles",
+  "buttonNewDevice": "Nuevo dispositivo",
+  "table": {
+    "columns": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "isActive": "Activo"
+    },
+    "noDescription": "Sin descripción",
+    "noData": "No se encontraron dispositivos",
+    "loading": "Cargando..."
+  },
+  "formNewDevice": {
+    "title": "Nuevo dispositivo",
+    "nameInput": "Nombre",
+    "isActiveInput": "Activo",
+    "descriptionInput": "Descripción",
+    "saveButton": "Guardar",
+    "validateName": "Ya existe un tipo de dispositivo con este nombre"
+  },
+  "validations": {
+    "name": "El nombre es requerido"
+  },
+  "formPlaceholder": {
+    "nameInput": "Nombre del dispositivo",
+    "descriptionInput": "Descripción del dispositivo"
+  },
+  "formEditDevice": {
+    "title": "Editar dispositivo",
+    "nameInput": "Nombre",
+    "isActiveInput": "Activo",
+    "descriptionInput": "Descripción",
+    "saveButton": "Guardar"
+  },
+  "formDelete": {
+    "title": "Confirmar eliminación",
+    "message": "¿Estás seguro de que deseas eliminar el dispositivo <strong>{{device}}</strong>?",
+    "success": "Registro eliminado correctamente",
+    "error": "Error al eliminar el registro",
+    "confirmButton": "Eliminar"
+  },
+  "message": {
+    "successCreate": "Dispositivo creado correctamente",
+    "errorCreate": "No se pudo crear el dispositivo",
+    "successUpdate": "Dispositivo actualizado correctamente",
+    "errorUpdate": "Error al actualizar el dispositivo",
+    "successDelete": "Dispositivo eliminado correctamente",
+    "errorDelete": "No se pudo eliminar el dispositivo"
+  }
+}

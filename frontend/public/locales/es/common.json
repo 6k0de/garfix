@@ -1,0 +1,33 @@
+{
+    "app": {
+        "title": "{{appName}}"
+    },
+    "actions": {
+        "new": "Nuevo",
+        "new_female": "Nueva",
+        "edit": "Editar",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "add": "Agregar",
+        "delete": "Eliminar",
+        "delete_large": "Eliminación",
+        "continue": "Continuar",
+        "previous": "Anterior",
+        "filters": "Filtros",
+        "show": "Mostrando",
+        "results_one": "resultado",
+        "results_other": "resultados",
+        "actions": "Acciones",
+        "confirm": "Confirmar",
+        "select": "Seleccionar"
+    },
+    "others": {
+        "description": "Descripción",
+        "branch": "Sucursal",
+        "device": "dispositivo"
+    },
+    "table": {
+        "a": "a",
+        "of": "de"
+    }
+}

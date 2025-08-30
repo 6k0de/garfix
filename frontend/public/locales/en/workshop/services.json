@@ -1,0 +1,118 @@
+{
+  "title": "New Service",
+  "description": "Complete all the required information to register a new service",
+  "errorGeneral": "Please select an existing customer or create a new one",
+  "noData": "No customers found",
+  "success": "Service created successfully!",
+  "qrCodeMessage": "The service has been registered with the code",
+  "finish": "View all services",
+  "first-step": {
+    "title": "1.- Client Information",
+    "buttonSaveandUseNewUser": "Save and use",
+    "buttonAddNewUser": "Register new client",
+    "placeholder": {
+      "searchInput": "Search client by name, phone, or email",
+      "newNameInput": "Full name",
+      "newEmailInput": "client@example.com",
+      "newAddressInput": "Full address",
+      "newTypeClientInput": "Select a client type",
+      "newDocumentType": "Select document type"
+    },
+    "labelInput": {
+      "newLabelUserName": "Full name",
+      "newLabelUserPhone": "Phone",
+      "newLabelUserEmail": "Email",
+      "newLabelUserAddress": "Address",
+      "newLabelUserTypeClient": "Client type",
+      "newLabelUserDocumentType": "Identification type"
+    },
+    "stepper": {
+      "one": "Client",
+      "two": "Device",
+      "three": "Details",
+      "four": "Confirm"
+    },
+    "validations": {
+      "name": "Name is required",
+      "phone": "Phone is required",
+      "email": "Email is not valid"
+    }
+  },
+  "second-step": {
+    "title": "2.- Device(s) Information",
+    "subtitle": "Devices",
+    "buttonAddDevice": "Add device",
+    "buttonAddMoreDevice": "Add another device",
+    "buttonDeleteDevice": "Delete device",
+    "newDevice": {
+      "title": "New Device",
+      "titleEdit": "Edit Device",
+      "validations": {
+        "typeDevice": "Device type is required",
+        "brandDevice": "Brand is required",
+        "modelDevice": "Model is required",
+        "appearanceDevice": "Condition is required",
+        "detailDevice": "Problem description is required",
+        "costRepair": "Repair cost is required",
+        "costRepairInvalid": "Repair cost must be a number"
+      },
+      "placeholder": {
+        "newTypeDeviceInput": "Select device",
+        "newBrandInput": "Samung",
+        "newModelInput": "S22 plus",
+        "newSerialNumberInput": "IMEI or serial number",
+        "newColorInput": "Device color",
+        "newAppearanceInput": "Select condition",
+        "newServiceDetailInput": "Detailed problem description",
+        "newSolutionDetailInput": "Write the possible solution (optional)",
+        "newAssignedTechnicianInput": "Select technician",
+        "newAssignedLocationInput": "Select location"
+      },
+      "labelInput": {
+        "newLabelTypeDevice": "Device type",
+        "newLabelBrand": "Brand",
+        "newLabelModel": "Model",
+        "newLabelSerialNumber": "IMEI / Serial number",
+        "newLabelColor": "Color",
+        "newLabelAppearance": "Apperance",
+        "newLabelServiceDetail": "Service detail (problem)",
+        "newLabelSolutionDetail": "Solution",
+        "newCostRepair": "Repair cost",
+        "newAdvance": "Deposit",
+        "newAssignedTechnician": "Assigned technician",
+        "newLocation": "Location",
+        "newEstimateDate": "Estimated delivery date",
+        "newEstimateTime": "Estimated delivery time"
+      }
+    },
+    "message": {
+      "noDevice": "You haven't added any devices yet"
+    }
+  },
+  "third-step": {
+    "title": "Service Details",
+    "placeholder": {
+      "observationsInput": "General observations about the service"
+    },
+    "labelInput": {
+      "dateReception": "Reception date",
+      "initialStatus": "Status",
+      "serviceCode": "Service code",
+      "observations": "Observations"
+    }
+  },
+  "summary": {
+    "title": "Summary and Confirmation",
+    "buttonFinish": "Create service",
+    "saving": "Saving...",
+    "subtitle1": "Client information",
+    "tagExistingUser": "Existing client",
+    "tagNotExistingUser": "New client",
+    "subtitle2": "Service details",
+    "subtitle3": "Devices",
+    "subtitle4": "Cost summary",
+    "total": "Total",
+    "advanceTotal": "Total deposit",
+    "totalPending": "Pending balance"
+  }
+}

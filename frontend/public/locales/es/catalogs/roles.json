@@ -1,0 +1,49 @@
+{
+  "title": "Catálogo de Roles",
+  "subtitle": "Gestiona los roles y permisos del sistema",
+  "buttnNewRole": "Nuevo rol",
+  "table": {
+    "columns": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "users": "Usuarios"
+    },
+    "noData": "No se encontraron roles",
+    "loading": "Cargando..."
+  },
+  "formNewRoleLabel": {
+    "title": "Nuevo rol",
+    "nameInput": "Nombre",
+    "descriptionInput": "Descripción",
+    "saveButton": "Guardando..."
+  },
+  "formPlaceholder": {
+    "nameInput": "Nombre del rol",
+    "descriptionInput": "Descripción del rol"
+  },
+  "formEditRole": {
+    "title": "Editar rol",
+    "nameInput": "Nombre",
+    "descriptionInput": "Descripción",
+    "saveButton": "Guardar",
+    "editButton": "Editar rol"
+  },
+  "formDelete": {
+    "title": "Confirmar eliminación",
+    "message": "¿Estás seguro de que deseas eliminar el rol <strong>{{role}}</strong>?",
+    "titleWarning": "Advertencia",
+    "warningMessage": "Este rol está asignado a <strong>{{number}}</strong> usuarios. Al eliminarlo, estos usuarios perderán sus permisos asociados.",
+    "success": "Registro eliminado correctamente",
+    "error": "Error al eliminar el registro",
+    "confirmButton": "Eliminar",
+    "confirmButtonCancel": "Eliminando..."
+  },
+  "message": {
+    "successCreate": "Rol creado correctamente",
+    "errorCreate": "No se pudo crear el Rol",
+    "successUpdate": "Rol actualizado correctamente",
+    "errorUpdate": "Error al actualizar el rol",
+    "successDelete": "Rol eliminado correctamente",
+    "errorDelete": "No se pudo eliminar el Rol"
+  }
+}

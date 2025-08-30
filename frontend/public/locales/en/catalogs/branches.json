@@ -1,0 +1,45 @@
+{
+    "title": "Branch Catalog",
+    "subtitle": "Manage the company's branches",
+    "addNewButton": "New Branch",
+    "table": {
+        "columns": {
+            "name": "Name",
+            "address": "Address",
+            "clients": "No. of Clients",
+            "technics": "No. of Technicians"
+        },
+        "noData": "No branches found"
+    },
+    "modal": {
+        "edit": "Edit Branch",
+        "new": "New Branch"
+    },
+    "formBranch": {
+        "validations": {
+            "name": "Name is required",
+            "nameExist": "A branch with this name already exists",
+            "address": "Address is required"
+        },
+        "modalNewFields": {
+            "name": "Name",
+            "namePlaceholder": "Branch name",
+            "address": "Address",
+            "addressPlaceholder": "Full address"
+        }
+    },
+    "formDelete": {
+        "title": "Confirm Deletion",
+        "message": "Are you sure you want to delete the branch <strong>{{branch}}</strong>?",
+        "deleting": "Deleting...",
+        "delete": "Delete"
+    },
+    "message": {
+        "successCreate": "Branch created successfully",
+        "errorCreate": "Failed to create branch",
+        "successUpdate": "Branch updated successfully",
+        "errorUpdate": "Error updating branch",
+        "successDelete": "Branch deleted successfully",
+        "errorDelete": "Failed to delete branch"
+    }
+}

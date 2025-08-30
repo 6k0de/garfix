@@ -1,0 +1,45 @@
+{
+    "title": "Catalogo de Sucursales",
+    "subtitle": "Administra las sucursales de la empresa",
+    "addNewButton": "Nueva sucursal",
+    "table": {
+        "columns": {
+            "name": "Nombre",
+            "address": "Dirección",
+            "clients": "No. Clientes",
+            "technics": "No. Técnicos"
+        },
+        "noData": "No hay sucursales registradas"
+    },
+    "modal": {
+        "edit": "Editar sucursal",
+        "new": "Nueva sucursal"
+    },
+    "formBranch": {
+        "validations": {
+            "name": "El nombre es requerido",
+            "nameExist": "Ya existe una sucursal con este nombre",
+            "address": "La dirección es requerida"
+        },
+        "modalNewFields": {
+            "name": "Nombre",
+            "namePlaceholder": "Nombre de la sucursal",
+            "address": "Dirección",
+            "addressPlaceholder": "Dirección completa"
+        }
+    },
+    "formDelete": {
+        "title": "Confirmar Eliminación",
+        "message": " ¿Estás seguro de que deseas eliminar la sucursal <strong>{{branch}}</strong>?",
+        "deleting": "Eliminando...",
+        "delete": "Eliminar"
+    },
+    "message": {
+        "successCreate": "Sucursal creada correctamente",
+        "errorCreate": "No se pudo crear la sucursal",
+        "successUpdate": "Sucursal actualizada correctamente",
+        "errorUpdate": "Error al actualizar la sucursal",
+        "successDelete": "Sucursal eliminada correctamente",
+        "errorDelete": "No se pudo eliminar la sucursal"
+    }
+}

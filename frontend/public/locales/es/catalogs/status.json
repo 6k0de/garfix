@@ -1,0 +1,42 @@
+{
+  "title": "Catálogo de Estatus",
+  "subtitle": "Gestiona los estatus para tus servicios y órdenes",
+  "buttonNewStatus": "Nuevo estatus",
+  "table": {
+    "columns": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "usedOn": "Usado en"
+    },
+    "noDescriptions": "Sin descripción",
+    "noData": "No se encontraron estatus",
+    "loading": "Cargando...",
+    "title": "Eliminar",
+    "deleteTitle": "No se puede eliminar porque está en uso"
+  },
+  "formNewStatus": {
+    "title": "Nuevo estatus",
+    "nameInput": "Nombre",
+    "descriptionInput": "Descripción",
+    "createStatus": " Ya existe un estado con este nombre",
+    "saveButton": "Guardar"
+  },
+  "formPlaceholder": {
+    "nameInput": "Nombre del estatus",
+    "descriptionInput": "Descripción del estatus"
+  },
+  "formEditStatus": {
+    "title": "Editar estatus",
+    "nameInput": "Nombre",
+    "descriptionInput": "Descripción",
+    "saveButton": "Guardar"
+  },
+  "formDelete": {
+    "title": "Confirmar eliminación",
+    "message": "¿Estás seguro de que deseas eliminar el estatus <strong>{{status}}</strong>?",
+    "success": "Registro eliminado correctamente",
+    "error": "Error al eliminar el registro",
+    "confirmButton": "Eliminar",
+    "confirmButtonCancel": "Eliminando..."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "home": "Home",
+  "workshop": "My Workshop",
+  "inventory": "Inventory",
+  "catalogs": "Catalogs",
+  "settings": "Settings",
+  "submenu": {
+    "workshop": {
+      "services": "New Service",
+      "listServices": "Services List"
+    },
+    "catalogs": {
+      "branches": "Branches",
+      "clients": "Clients",
+      "technics": "Technicians",
+      "roles": "Roles",
+      "status": "Statuses",
+      "locations": "Locations",
+      "devices": "Devices"
+    }
+  }
+}

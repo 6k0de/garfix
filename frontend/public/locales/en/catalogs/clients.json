@@ -1,0 +1,46 @@
+{
+    "title": "Client Catalog",
+    "subtitle": "Manage your client information",
+    "newBotton": "New Client",
+    "form": {
+        "validations": {
+            "name": "Name is required",
+            "phone": "Phone number is required",
+            "email": "Invalid email address",
+            "typeClient": "Client type is required",
+            "documentType": "Document type is required"
+        },
+        "newFields": {
+            "name": "Full Name",
+            "namePlaceholder": "Full name or company name",
+            "phone": "Phone",
+            "phonePlaceholder": "Phone number",
+            "email": "Email",
+            "emailPlaceholder": "email@example.com",
+            "address": "Address",
+            "addressPlaceholder": "Full address",
+            "clientType": "Client Type",
+            "documentType": "Document Type"
+        }
+    },
+    "table": {
+        "columns": {
+            "client": "Client",
+            "contact": "Contact",
+            "typeClient": "Client Type",
+            "documentTyoe": "Document Type",
+            "services": "Services"
+        },
+        "noData": "No clients registered"
+    },
+    "modal": {
+        "new": "New Client",
+        "edit": "Edit Client"
+    },
+    "formDelete": {
+        "title": "Confirm Deletion",
+        "message": "Are you sure you want to delete client <strong>{{client}}</strong>?",
+        "delete": "Delete",
+        "deleting": "Deleting..."
+    }
+}

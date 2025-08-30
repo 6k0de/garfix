@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15 # versión de PostgreSQL
+    container_name: postgres-server
+    restart: unless-stopped
+    ports:
+      - "5432:5432" # expone el puerto 5432
+    environment:
+      POSTGRES_USER: dev # reemplaza por el usuario que quieras
+      POSTGRES_PASSWORD: dev1! # reemplaza por la contraseña deseada
+      POSTGRES_DB: garfix # nombre de la base de datos por defecto
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

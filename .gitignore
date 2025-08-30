@@ -1,0 +1,80 @@
+# --- Sistema / OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editores / IDE ---
+.vscode/
+.idea/
+*.code-workspace
+
+# --- Node / JS / TS (global) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.eslintcache
+
+# --- Builds / Bundlers (React + Node) ---
+dist/
+build/
+out/
+.cache/
+.turbo/
+.vite/
+.parcel-cache/
+coverage/
+
+# --- Next.js (si aplica en frontend) ---
+.next/
+.vercel/
+
+# --- Herramientas / Servicios ---
+.netlify/
+
+# --- Archivos temporales / procesos ---
+*.pid
+*.seed
+*.pid.lock
+tmp/
+temp/
+logs/
+*.log
+
+# --- Env / secretos (mantén un .env.example) ---
+.env
+.env.*
+!.env.example
+
+# --- Prisma ---
+# Mantén prisma/migrations en el repo (NO ignorar)
+# Ignora DBs locales (si usas SQLite en desarrollo)
+prisma/*.db
+prisma/*.db-journal
+prisma/*-journal
+
+# --- Bases de datos / dumps generales ---
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.sql
+*.bak
+
+# --- Docker (opcionales) ---
+docker-compose.override.yml
+.docker/
+*.tar
+
+# --- Archivos grandes/paquetes (evitar subir binarios) ---
+*.zip
+*.7z
+*.rar

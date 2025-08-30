@@ -1,0 +1,41 @@
+{
+    "title": "Location Catalog",
+    "subtitle": "Manage your product locations",
+    "buttonNewLocation": "New location",
+    "table": {
+        "columns": {
+            "name": "Name",
+            "instructions": "Instructions"
+        },
+        "noInstructions": "without instructions",
+        "noData": "No locations found",
+        "loading": "Loading..."
+    },
+    "formNewLocationLabel": {
+        "title": "New location",
+        "branchInput": "Branch",
+        "nameInput": "Name",
+        "instructionsInput": "Instructions",
+        "saveButton": "Save",
+        "validateBranch": "branch is required",
+        "validateBranchname": "A location with this name already exists in the selected branch"
+    },
+    "formPlaceholder": {
+        "branchInput": "Select branch",
+        "nameInput": "Location name",
+        "instructionsInput": "Location instructions or description"
+    },
+    "formEditLocation": {
+        "title": "Edit location",
+        "nameInput": "Name",
+        "descriptionInput": "Description",
+        "saveButton": "Save"
+    },
+    "formDelete": {
+        "title": "Confirm deletion",
+        "message": "Are you sure you want to delete the location <strong>{{location}}</strong> from branch <strong>{{branch}}</strong>?",
+        "success": "Record deleted successfully",
+        "error": "Error deleting record",
+        "confirmButton": "Delete"
+    }
+}

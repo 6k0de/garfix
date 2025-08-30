@@ -1,0 +1,41 @@
+{
+  "title": "Catálogo de Ubicaciones",
+  "subtitle": "Gestiona las ubicaciones de tus productos",
+  "buttonNewLocation": "Nueva ubicación",
+  "table": {
+    "columns": {
+      "name": "Nombre",
+      "instructions": "Instrucciones"
+    },
+    "noInstructions": "Sin instrucciones",
+    "noData": "No se encontraron ubicaciones",
+    "loading": "Cargando..."
+  },
+  "formNewLocationLabel": {
+    "title": "Nueva ubicación",
+    "branchInput": "Sucursal",
+    "nameInput": "Nombre",
+    "instructionsInput": "Instrucciones",
+    "saveButton": "Guardar",
+    "validateBranch": "La sucursal es requerida",
+    "validateBranchname": "Ya existe una ubicación con este nombre en la sucursal seleccionada"
+  },
+  "formPlaceholder": {
+    "branchInput": "Seleccionar sucursal",
+    "nameInput": "Nombre de la ubicación",
+    "instructionsInput": "Instrucciones o descripción de la ubicación"
+  },
+  "formEditLocation": {
+    "title": "Editar ubicación",
+    "nameInput": "Nombre",
+    "descriptionInput": "Descripción",
+    "saveButton": "Guardar"
+  },
+  "formDelete": {
+    "title": "Confirmar eliminación",
+    "message": "¿Estás seguro de que deseas eliminar la ubicación <0>{{location}}</0> de la sucursal <1>{{branch}}</1>?",
+    "success": "Registro eliminado correctamente",
+    "error": "Error al eliminar el registro",
+    "confirmButton": "Eliminar"
+  }
+}

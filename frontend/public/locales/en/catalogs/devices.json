@@ -1,0 +1,52 @@
+{
+  "title": "Device Catalog",
+  "subtitle": "Manage available devices",
+  "buttonNewDevice": "New device",
+  "table": {
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "isActive": "Active"
+    },
+    "noDescription": "No description",
+    "noData": "No devices found",
+    "loading": "Loading..."
+  },
+  "formNewDevice": {
+    "title": "New device",
+    "nameInput": "Name",
+    "isActiveInput": "Active",
+    "descriptionInput": "Description",
+    "saveButton": "Save",
+    "validateName": "There is already a type of device with this name"
+  },
+  "validations": {
+    "name": "Name is required"
+  },
+  "formPlaceholder": {
+    "nameInput": "Device name",
+    "descriptionInput": "Device description"
+  },
+  "formEditDevice": {
+    "title": "Edit device",
+    "nameInput": "Name",
+    "isActiveInput": "Active",
+    "descriptionInput": "Description",
+    "saveButton": "Save"
+  },
+  "formDelete": {
+    "title": "Confirm deletion",
+    "message": "Are you sure you want to delete the device <strong>{{device}}</strong>?",
+    "success": "Record deleted successfully",
+    "error": "Error deleting record",
+    "confirmButton": "Delete"
+  },
+  "message": {
+    "successCreate": "Device created successfully",
+    "errorCreate": "Failed to create device",
+    "successUpdate": "Device updated successfully",
+    "errorUpdate": "Error updating device",
+    "successDelete": "Device deleted successfully",
+    "errorDelete": "Failed to delete device"
+  }
+}

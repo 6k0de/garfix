@@ -1,0 +1,22 @@
+{
+  "home": "Inicio",
+  "workshop": "Mi taller",
+  "inventory": "Inventario",
+  "catalogs": "Catálogos",
+  "settings": "Configuración",
+  "submenu": {
+    "workshop": {
+      "services": "Nuevo servicio",
+      "listServices": "Lista de servicios"
+    },
+    "catalogs": {
+      "branches": "Sucursales",
+      "clients": "Clientes",
+      "technics": "Técnicos",
+      "roles": "Roles",
+      "status": "Estatus",
+      "locations": "Ubicaciones",
+      "devices": "Dispositivos"
+    }
+  }
+}

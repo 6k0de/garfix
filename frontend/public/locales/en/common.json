@@ -1,0 +1,36 @@
+{
+  "app": {
+    "title": "{{appName}}"
+  },
+  "actions": {
+    "new": "New",
+    "new_female": "New",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "delete": "Delete",
+    "delete_large": "Deletion",
+    "continue": "Next",
+    "previous": "Previous",
+    "filters": "Filters",
+    "show": "Showing",
+    "results_one": "result",
+    "results_other": "results",
+    "actions": "Actions",
+    "confirm": "Confirm",
+    "select": "Select"
+  },
+  "others": {
+    "description": "Description",
+    "branch": "Branch",
+    "device": "Device"
+  },
+  "table": {
+    "to": "to",
+    "of": "of",
+    "results_one": "result",
+    "results_other": "results",
+    "actions": "Actions"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "title": "Services",
+  "subtitle": "Manage all service orders",
+  "buttonAddNew": "New service",
+  "placeholder": {
+    "searchInput": "Search by code, client, or device"
+  },
+  "filter": {
+    "title": "Filters",
+    "status": "Status",
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+    "cleanButton": "Clear",
+    "applyButton": "Apply"
+  },
+  "filterPlaceholder": {
+    "status": "Select a status",
+    "branch": "Select a branch",
+    "technic": "Select a technician"
+  },
+  "table": {
+    "columns": {
+      "code": "Code",
+      "client": "Client",
+      "technic": "Technician",
+      "date": "Date",
+      "status": "Status"
+    },
+    "noData": "No services found",
+    "noFilters": "Try other search criteria or create a new service.",
+    "loading": "Loading..."
+  }
+}

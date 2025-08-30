@@ -1,0 +1,47 @@
+{
+    "title": "Catálogo de Técnicos",
+    "subtitle": "Administra el personal técnico de la empresa",
+    "newBotton": "Nuevo Técnico",
+    "form": {
+        "validations": {
+            "name": "El nombre es requerido",
+            "branch": "La sucursal es requerida",
+            "role": "El rol es requerido"
+        },
+        "formNewFields": {
+            "name": "Nombre completo",
+            "namePlaceholder": "Nombre completo del técnico",
+            "email": "Correo electrónico",
+            "emailPlaceholder": "correo@ejemplo.com",
+            "branch": "Sucursal",
+            "role": "Rol"
+        }
+    },
+    "table": {
+        "columns": {
+            "technic": "Técnico",
+            "contact": "Contacto",
+            "numService": "No. Servicios",
+            "role": "Rol"
+        },
+        "noData": "No hay técnicos registrados"
+    },
+    "modal": {
+        "new": "Nuevo Técnico",
+        "edit": "Editar Técnico"
+    },
+    "formDelete": {
+        "title": "Confirmar Eliminación",
+        "message": "¿Estás seguro de que deseas eliminar al técnico <strong>{{technic}}</strong> ?",
+        "delete": "Eliminar",
+        "deleting": "Eliminando..."
+    },
+  "message": {
+    "successCreate": "Técnico creado correctamente",
+    "errorCreate": "No se pudo crear el Técnico",
+    "successUpdate": "Técnico actualizado correctamente",
+    "errorUpdate": "Error al actualizar el Técnico",
+    "successDelete": "Técnico eliminado correctamente",
+    "errorDelete": "No se pudo eliminar el Técnico"
+  }
+}
