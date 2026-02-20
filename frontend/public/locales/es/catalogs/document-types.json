@@ -1,0 +1,46 @@
+{
+  "title": "Catálogo de Tipos de Documento",
+  "subtitle": "Gestiona los tipos de documento disponibles para clientes",
+  "newButton": "Nuevo tipo de documento",
+  "table": {
+    "columns": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "usedOn": "Usado en"
+    },
+    "noData": "No se encontraron tipos de documento",
+    "noDescriptions": "Sin descripción",
+    "deleteBlockedTitle": "No se puede eliminar porque está en uso"
+  },
+  "form": {
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción"
+    },
+    "placeholders": {
+      "name": "Nombre del tipo de documento",
+      "description": "Descripción del tipo de documento"
+    },
+    "validations": {
+      "name": "El nombre es requerido",
+      "duplicated": "Ya existe un tipo de documento con ese nombre"
+    }
+  },
+  "messages": {
+    "createSuccess": "Tipo de documento creado correctamente",
+    "updateSuccess": "Tipo de documento actualizado correctamente",
+    "saveError": "No fue posible guardar el tipo de documento",
+    "deleteSuccess": "Tipo de documento eliminado correctamente",
+    "deleteError": "No fue posible eliminar el tipo de documento"
+  },
+  "modal": {
+    "newTitle": "Nuevo tipo de documento",
+    "editTitle": "Editar tipo de documento"
+  },
+  "deleteModal": {
+    "title": "Confirmar eliminación",
+    "message": "¿Estás seguro de que deseas eliminar el tipo de documento <strong>{{documentType}}</strong>?",
+    "deleteButton": "Eliminar",
+    "deletingButton": "Eliminando..."
+  }
+}

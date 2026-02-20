@@ -1,0 +1,46 @@
+{
+  "title": "Client Types Catalog",
+  "subtitle": "Manage available client types for records",
+  "newButton": "New client type",
+  "table": {
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "usedOn": "Used in"
+    },
+    "noData": "No client types found",
+    "noDescriptions": "No description",
+    "deleteBlockedTitle": "Cannot be deleted because it is in use"
+  },
+  "form": {
+    "fields": {
+      "name": "Name",
+      "description": "Description"
+    },
+    "placeholders": {
+      "name": "Client type name",
+      "description": "Client type description"
+    },
+    "validations": {
+      "name": "Name is required",
+      "duplicated": "A client type with this name already exists"
+    }
+  },
+  "messages": {
+    "createSuccess": "Client type created successfully",
+    "updateSuccess": "Client type updated successfully",
+    "saveError": "Could not save the client type",
+    "deleteSuccess": "Client type deleted successfully",
+    "deleteError": "Could not delete the client type"
+  },
+  "modal": {
+    "newTitle": "New client type",
+    "editTitle": "Edit client type"
+  },
+  "deleteModal": {
+    "title": "Confirm deletion",
+    "message": "Are you sure you want to delete the client type <strong>{{typeClient}}</strong>?",
+    "deleteButton": "Delete",
+    "deletingButton": "Deleting..."
+  }
+}

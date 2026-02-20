@@ -1,11 +1,16 @@
 {
     "title": "Nuevo servicio",
+    "editTitle": "Editar servicio",
     "description": "Completa todos los datos necesarios para registrar un nuevo servicio",
+    "editDescription": "Actualiza los datos del servicio seleccionado",
     "errorGeneral": "Por favor selecciona un cliente o crea uno nuevo",
     "noData": "No se encontraron clientes",
     "success": "¡Servicio creado exitosamente!",
+    "updateSuccess": "¡Servicio actualizado exitosamente!",
     "qrCodeMessage": "El servicio ha sido registrado con el código",
+    "updateQrCodeMessage": "El servicio se actualizó con el código",
     "finish": "Ver todos los servicios",
+    "updateError": "No fue posible actualizar el servicio",
     "first-step": {
         "title": "1.- Información del cliente",
         "buttonSaveandUseNewUser": "Guardar y usar",

@@ -1,8 +1,7 @@
-import {Prisma, PrismaClient} from '../../../../generated/prisma'
 import { Request, Response } from 'express'
-import { deviceSchema, updateDeviceSchema } from './device.schema'
-
-const prisma = new PrismaClient()
+import { Prisma } from '@prisma/client'
+import { deviceSchema, updateDeviceSchema } from './device.schema.js'
+import { prisma } from '../../../lib/prisma.js'
 
 export const createDevice = async(req: Request, res: Response) => {
   const device = deviceSchema.safeParse(req.body)
@@ -48,7 +47,7 @@ export const createDevice = async(req: Request, res: Response) => {
   }
 }
 
-export const getAllDevices = async(_: Reques, res: Response) => {
+export const getAllDevices = async(_: Request, res: Response) => {
   try{
     const devices = await prisma.deviceType.findMany({
       select: {

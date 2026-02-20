@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CatalogForm } from '@/components/ui/CatalogForm'
 import { Modal } from '@/components/ui/Modal'

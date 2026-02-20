@@ -1,25 +1,25 @@
 import { Request, Response } from 'express'
-import { branchSchema, updateBranchSchema } from './branche.schema.ts'
-import { Prisma, PrismaClient } from '../../../../generated/prisma'
+import { branchSchema, updateBranchSchema } from './branche.schema.js'
+import { Prisma } from '@prisma/client'
+import { prisma } from '../../../lib/prisma.js'
+import { ensureDefaultBranch, ensureDefaultCompany } from '../../../lib/defaultCatalogs.js'
 
-const prisma = new PrismaClient()
 export const createBranch = async (req: Request, res: Response) => {
   const branch = branchSchema.safeParse(req.body)
-  const companyIdExample = 'f3507588-2ae7-4bf4-81e5-c882bd632593'
   if (!branch.success) {
     return res
       .status(400)
       .json({ error: 'Datos Invalidos', details: branch.error.issues })
   }
   const { name, address } = branch.data
-  console.log(branch)
+  const company = await ensureDefaultCompany()
 
   try {
     const branch = await prisma.branch.create({
       data: {
         name,
         address,
-        companyId: companyIdExample,
+        companyId: company.id,
       },
       select: {
         id: true,
@@ -55,8 +55,10 @@ export const createBranch = async (req: Request, res: Response) => {
 
 export const getAllBranches = async (_: Request, res: Response) => {
   try {
+    await ensureDefaultBranch()
+
     const techRol = await prisma.role.findFirst({
-      where: { name: 'Técnico' },
+      where: { name: { in: ['Técnico', 'Tecnico'] } },
       select: { id: true },
     })
 

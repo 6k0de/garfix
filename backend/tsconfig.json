@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",           // Especifica la versión de ECMAScript que se utilizará
+    "module": "commonjs",          // Módulos comunes para Node.js
+    "outDir": "./dist",            // Directorio de salida para archivos compilados
+    "esModuleInterop": true,       // Interoperabilidad con módulos ES
+    "strict": true,                // Activa todas las comprobaciones estrictas
+    "skipLibCheck": true,          // Omite la verificación de tipos de las dependencias
+    "types": ["node"]              // Incluye tipos de Node.js
+  },
+  "include": ["src/**/*.ts", "prisma.config.ts"],      // Incluye todos los archivos .ts en la carpeta src y prisma.config.ts
+  "exclude": ["node_modules"]      // Excluye node_modules
+}

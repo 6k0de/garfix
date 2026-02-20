@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import * as b from './branche.controller.ts'
+import * as b from './branche.controller.js'
 
 const br = Router()
 

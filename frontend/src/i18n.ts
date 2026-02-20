@@ -30,6 +30,10 @@ import technic_es from '../public/locales/es/catalogs/technicians.json'
 import technic_en from '../public/locales/en/catalogs/technicians.json'
 import client_es from '../public/locales/es/catalogs/clients.json'
 import client_en from '../public/locales/en/catalogs/clients.json'
+import documentType_es from '../public/locales/es/catalogs/document-types.json'
+import documentType_en from '../public/locales/en/catalogs/document-types.json'
+import typeClient_es from '../public/locales/es/catalogs/type-clients.json'
+import typeClient_en from '../public/locales/en/catalogs/type-clients.json'
 
 i18n
   .use(LanguageDetector) // detecta por localStorage, navigator, etc.
@@ -48,6 +52,8 @@ i18n
       'footer',
       'menu',
       'profile',
+      'documentType',
+      'typeClient',
     ],
     defaultNS: 'common',
     resources: {
@@ -64,7 +70,9 @@ i18n
         profile: profile_es,
         branch: branch_es,
         technic: technic_es,
-        client: client_es
+        client: client_es,
+        documentType: documentType_es,
+        typeClient: typeClient_es,
       },
       en: {
         common: common_en,
@@ -79,7 +87,9 @@ i18n
         profile: profile_en,
         branch: branch_en,
         technic: technic_en,
-        client: client_en
+        client: client_en,
+        documentType: documentType_en,
+        typeClient: typeClient_en,
       },
     },
     interpolation: {

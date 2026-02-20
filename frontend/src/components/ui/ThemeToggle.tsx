@@ -1,6 +1,6 @@
 // src/components/ui/ThemeToggle.tsx
 import { Sun, Moon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { useThemeStore } from '@/utils/store/ThemeStore'
 
 export function ThemeToggle() {

@@ -1,0 +1,46 @@
+{
+  "title": "Catálogo de Tipos de Cliente",
+  "subtitle": "Gestiona los tipos de cliente disponibles para registros",
+  "newButton": "Nuevo tipo de cliente",
+  "table": {
+    "columns": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "usedOn": "Usado en"
+    },
+    "noData": "No se encontraron tipos de cliente",
+    "noDescriptions": "Sin descripción",
+    "deleteBlockedTitle": "No se puede eliminar porque está en uso"
+  },
+  "form": {
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción"
+    },
+    "placeholders": {
+      "name": "Nombre del tipo de cliente",
+      "description": "Descripción del tipo de cliente"
+    },
+    "validations": {
+      "name": "El nombre es requerido",
+      "duplicated": "Ya existe un tipo de cliente con ese nombre"
+    }
+  },
+  "messages": {
+    "createSuccess": "Tipo de cliente creado correctamente",
+    "updateSuccess": "Tipo de cliente actualizado correctamente",
+    "saveError": "No fue posible guardar el tipo de cliente",
+    "deleteSuccess": "Tipo de cliente eliminado correctamente",
+    "deleteError": "No fue posible eliminar el tipo de cliente"
+  },
+  "modal": {
+    "newTitle": "Nuevo tipo de cliente",
+    "editTitle": "Editar tipo de cliente"
+  },
+  "deleteModal": {
+    "title": "Confirmar eliminación",
+    "message": "¿Estás seguro de que deseas eliminar el tipo de cliente <strong>{{typeClient}}</strong>?",
+    "deleteButton": "Eliminar",
+    "deletingButton": "Eliminando..."
+  }
+}

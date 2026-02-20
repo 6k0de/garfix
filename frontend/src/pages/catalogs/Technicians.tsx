@@ -9,7 +9,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { CatalogForm } from '@/components/ui/CatalogForm'
@@ -25,6 +25,14 @@ export interface Technician {
   email?: string | undefined
   branchId?: string
   roleId?: string
+  branch?: {
+    id?: string
+    name?: string
+  }
+  role?: {
+    id?: string
+    name?: string
+  }
   serviceCount?: number | undefined
 }
 export const Technicians: React.FC = () => {
@@ -237,20 +245,18 @@ export const Technicians: React.FC = () => {
       label: t('technic:form.formNewFields.branch'),
       type: 'select' as const,
       required: true,
-      options: branches.map((branch) => ({
-        value: branch.id,
-        label: branch.name,
-      })),
+      options: branches.flatMap((branch) =>
+        branch.id ? [{ value: branch.id, label: branch.name }] : []
+      ),
     },
     {
       name: 'roleId',
       label: t('technic:form.formNewFields.role'),
       type: 'select' as const,
       required: true,
-      options: roles.map((rol) => ({
-        value: rol.id,
-        label: rol.name,
-      })),
+      options: roles.flatMap((rol) =>
+        rol.id ? [{ value: rol.id, label: rol.name }] : []
+      ),
     },
   ]
 

@@ -8,7 +8,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { CatalogForm } from '@/components/ui/CatalogForm'
@@ -16,7 +16,6 @@ import { Trans, useTranslation } from 'react-i18next'
 import {
   createBranch,
   deleteBranch,
-  getAllBranches,
   updateBranch,
 } from '@/services/catalogs/branch.api'
 import toast, { Toaster } from 'react-hot-toast'

@@ -9,6 +9,8 @@ import { DevicesCatalog } from './pages/catalogs/Devices'
 import { Branches } from './pages/catalogs/Branches'
 import { Technicians } from './pages/catalogs/Technicians'
 import { Clients } from './pages/catalogs/Clients'
+import { TypeClientsCatalog } from './pages/catalogs/TypeClients'
+import { DocumentTypesCatalog } from './pages/catalogs/DocumentTypes'
 
 function App() {
   return (
@@ -18,11 +20,14 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route path="services">
               <Route path="create" element={<CreateService />} />
+              <Route path="edit/:id" element={<CreateService />} />
               <Route path="list" element={<ServicesList />} />
             </Route>
             <Route path="catalogs">
               <Route path="branches" element={<Branches />} />
               <Route path="clients" element={<Clients />} />
+              <Route path="type-clients" element={<TypeClientsCatalog />} />
+              <Route path="document-types" element={<DocumentTypesCatalog />} />
               <Route path="technicians" element={<Technicians />} />
               <Route path="roles" element={<RolesCatalog />} />
               <Route path="status" element={<StatusCatalog />} />

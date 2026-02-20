@@ -1,8 +1,8 @@
 import {
   BuildingIcon,
   ClipboardListIcon,
+  FileTextIcon,
   HomeIcon,
-  icons,
   ListIcon,
   MapPinIcon,
   MonitorSmartphoneIcon,
@@ -13,7 +13,6 @@ import {
   ShieldIcon,
   TagIcon,
   UserIcon,
-  UsersIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -62,6 +61,16 @@ export const useMenuItems = () => {
           id: '/catalogs/clients',
           label: t('submenu.catalogs.clients'),
           icon: <UserIcon size={18} />
+        },
+        {
+          id: '/catalogs/type-clients',
+          label: t('submenu.catalogs.typeClients'),
+          icon: <UserIcon size={18} />
+        },
+        {
+          id: '/catalogs/document-types',
+          label: t('submenu.catalogs.documentTypes'),
+          icon: <FileTextIcon size={18} />
         },
         {
           id: '/catalogs/technicians',

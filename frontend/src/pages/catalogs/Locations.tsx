@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   PlusIcon,
   Pencil as EditIcon,
@@ -8,213 +8,216 @@ import {
   ChevronRightIcon,
 } from 'lucide-react'
 import { CatalogForm } from '../../components/ui/CatalogForm'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Trans, useTranslation } from 'react-i18next'
-interface Location {
-  id: number
+import toast, { Toaster } from 'react-hot-toast'
+import { useLocationsStore } from '@/utils/store/LocationsStore.tsx'
+import {
+  createLocation,
+  deleteLocation,
+  updateLocation,
+} from '@/services/catalogs/location.api.ts'
+import { useBranchStore } from '@/utils/store/BranchesStore.tsx'
+
+interface BranchOption {
+  id: string
   name: string
-  branch: string
-  instructions: string
 }
+
+export interface LocationRecord {
+  id?: string
+  name: string
+  branchId: string
+  instructions: string
+  branch?: BranchOption
+  servicesCount?: number
+}
+
+export interface LocationPayload {
+  id?: string
+  name: string
+  branchId: string
+  instructions?: string
+}
+
+const initialValues: LocationPayload = {
+  id: '',
+  name: '',
+  branchId: '',
+  instructions: '',
+}
+
 export const LocationsCatalog: React.FC = () => {
-  const { t } = useTranslation(['common', 'location', 'roles'])
-  const [locations, setLocations] = useState<Location[]>([
-    {
-      id: 1,
-      name: 'Mostrador',
-      branch: 'Sucursal Principal',
-      instructions: 'Ubicación para equipos recién recibidos',
-    },
-    {
-      id: 2,
-      name: 'Taller',
-      branch: 'Sucursal Principal',
-      instructions: 'Área de reparación principal',
-    },
-    {
-      id: 3,
-      name: 'Bodega',
-      branch: 'Sucursal Principal',
-      instructions: 'Almacenamiento de equipos y repuestos',
-    },
-    {
-      id: 4,
-      name: 'Vitrina',
-      branch: 'Sucursal Principal',
-      instructions: 'Equipos listos para entrega',
-    },
-    {
-      id: 5,
-      name: 'Mostrador',
-      branch: 'Sucursal Norte',
-      instructions: 'Recepción de equipos',
-    },
-    {
-      id: 6,
-      name: 'Taller',
-      branch: 'Sucursal Norte',
-      instructions: '',
-    },
-    {
-      id: 7,
-      name: 'Mostrador',
-      branch: 'Sucursal Sur',
-      instructions: 'Área de recepción y entrega',
-    },
-  ])
+  const { t } = useTranslation(['common', 'location'])
+  const { locations, fetchLocations } = useLocationsStore()
+  const { branches, fetchBranches } = useBranchStore()
+
   const [currentPage, setCurrentPage] = useState(1)
-  const branches = ['Sucursal Principal', 'Sucursal Norte', 'Sucursal Sur']
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [currentLocation, setCurrentLocation] = useState<Location | null>(null)
-  const [formValues, setFormValues] = useState({
-    name: '',
-    branch: '',
-    instructions: '',
-  })
+  const [currentLocation, setCurrentLocation] = useState<LocationRecord | null>(
+    null
+  )
+  const [formValues, setFormValues] = useState<LocationPayload>(initialValues)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
   useEffect(() => {
     if (currentLocation) {
       setFormValues({
+        id: currentLocation.id,
         name: currentLocation.name,
-        branch: currentLocation.branch,
-        instructions: currentLocation.instructions,
+        branchId: currentLocation.branch?.id || currentLocation.branchId,
+        instructions: currentLocation.instructions || '',
       })
-    } else {
-      setFormValues({
-        name: '',
-        branch: '',
-        instructions: '',
-      })
+      return
     }
+
+    setFormValues(initialValues)
   }, [currentLocation])
 
+  useEffect(() => {
+    fetchLocations()
+    fetchBranches()
+  }, [fetchLocations, fetchBranches])
+
   const itemsPerPage = 5
-  const totalPages = Math.ceil(locations.length / itemsPerPage)
-  const paginatedServices = locations.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const totalPages = Math.max(1, Math.ceil(locations.length / itemsPerPage))
+  const paginatedLocations = useMemo(
+    () =>
+      locations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [locations, currentPage]
   )
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo(0, 0)
   }
-  const handleOpenModal = (location?: Location) => {
+
+  const handleOpenModal = (location?: LocationRecord) => {
     setCurrentLocation(location || null)
     setFormErrors({})
     setIsModalOpen(true)
   }
+
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setCurrentLocation(null)
   }
-  const handleOpenDeleteModal = (location: Location) => {
+
+  const handleOpenDeleteModal = (location: LocationRecord) => {
     setCurrentLocation(location)
     setIsDeleteModalOpen(true)
   }
+
   const handleCloseDeleteModal = () => {
     setIsDeleteModalOpen(false)
     setCurrentLocation(null)
   }
+
   const handleInputChange = (name: string, value: string) => {
-    setFormValues({
-      ...formValues,
+    setFormValues((prev) => ({
+      ...prev,
       [name]: value,
-    })
-    // Clear error when field is edited
+    }))
+
     if (formErrors[name]) {
       setFormErrors((prev) => {
-        const newErrors = {
-          ...prev,
-        }
-        delete newErrors[name]
-        return newErrors
+        const next = { ...prev }
+        delete next[name]
+        return next
       })
     }
   }
+
   const validateForm = () => {
     const errors: Record<string, string> = {}
-    if (!formValues.branch) {
-      errors.branch = t('location:formNewLocationLabel.validateBranch')
+
+    if (!formValues.branchId) {
+      errors.branchId = t('location:formNewLocationLabel.validateBranch')
     }
+
     if (!formValues.name.trim()) {
       errors.name = 'El nombre es requerido'
     } else if (
       locations.some(
         (location) =>
           location.name.toLowerCase() === formValues.name.toLowerCase() &&
-          location.branch === formValues.branch &&
           (!currentLocation || location.id !== currentLocation.id)
       )
     ) {
-      errors.name =
-        t('location:formNewLocationLabel.validateBranchname')
+      errors.name = t('location:formNewLocationLabel.validateBranchname')
     }
+
     return errors
   }
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errors = validateForm()
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors)
       return
     }
+
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      if (currentLocation) {
-        // Update existing location
-        setLocations(
-          locations.map((location) =>
-            location.id === currentLocation.id
-              ? {
-                  ...location,
-                  name: formValues.name,
-                  branch: formValues.branch,
-                  instructions: formValues.instructions,
-                }
-              : location
-          )
-        )
-      } else {
-        // Create new location
-        const newLocation: Location = {
-          id: Math.max(0, ...locations.map((l) => l.id)) + 1,
-          name: formValues.name,
-          branch: formValues.branch,
-          instructions: formValues.instructions,
+    try {
+      if (formValues.id) {
+        const { status } = await updateLocation(formValues)
+        if (status === 200) {
+          toast.success('Ubicación actualizada correctamente')
         }
-        setLocations([...locations, newLocation])
+      } else {
+        const { id, ...payload } = formValues
+        const location = await createLocation(payload)
+        if (location.id) {
+          toast.success('Ubicación creada correctamente')
+        }
       }
-      setIsSubmitting(false)
+
+      setFormValues(initialValues)
       handleCloseModal()
-    }, 500)
-  }
-  const handleDelete = () => {
-    if (!currentLocation) return
-    setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      setLocations(
-        locations.filter((location) => location.id !== currentLocation.id)
-      )
+      await fetchLocations()
+      setCurrentPage(1)
+    } catch (error) {
+      console.error(error)
+      toast.error('No fue posible guardar la ubicación')
+    } finally {
       setIsSubmitting(false)
-      handleCloseDeleteModal()
-    }, 500)
+    }
   }
+
+  const handleDelete = async () => {
+    if (!currentLocation?.id) return
+
+    setIsSubmitting(true)
+    try {
+      const { status } = await deleteLocation(currentLocation.id)
+      if (status === 200) {
+        toast.success(t('location:formDelete.success'))
+      }
+      handleCloseDeleteModal()
+      await fetchLocations()
+      setCurrentPage(1)
+    } catch (error) {
+      console.error(error)
+      toast.error(t('location:formDelete.error'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const formFields = [
     {
-      name: 'branch',
+      name: 'branchId',
       label: t('location:formNewLocationLabel.branchInput'),
       type: 'select' as const,
       required: true,
       options: branches.map((branch) => ({
-        value: branch,
-        label: branch,
+        value: branch.id!,
+        label: branch.name,
       })),
     },
     {
@@ -231,8 +234,10 @@ export const LocationsCatalog: React.FC = () => {
       placeholder: t('location:formPlaceholder.instructionsInput'),
     },
   ]
+
   return (
     <div>
+      <Toaster />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
@@ -252,39 +257,28 @@ export const LocationsCatalog: React.FC = () => {
           </Button>
         </div>
       </div>
+
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('location:table.columns.name')}
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('common:others.branch')}
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('location:table.columns.instructions')}
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('common:actions.actions')}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {paginatedServices.map((location) => (
+              {paginatedLocations.map((location) => (
                 <tr
                   key={location.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
@@ -298,15 +292,15 @@ export const LocationsCatalog: React.FC = () => {
                         size={16}
                         className="mr-1.5 text-gray-500 dark:text-gray-400"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
-                        {location.branch}
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {location.branch?.name || '-'}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {location.instructions || (
                       <span className="text-gray-400 dark:text-gray-500 italic">
-                        {t('locations:table.noInstructions')}
+                        {t('location:table.noInstructions')}
                       </span>
                     )}
                   </td>
@@ -321,8 +315,17 @@ export const LocationsCatalog: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleOpenDeleteModal(location)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                        title="Eliminar"
+                        className={`text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 ${
+                          (location.servicesCount || 0) > 0
+                            ? 'opacity-50 cursor-not-allowed'
+                            : ''
+                        }`}
+                        title={
+                          (location.servicesCount || 0) > 0
+                            ? 'No se puede eliminar porque está en uso'
+                            : 'Eliminar'
+                        }
+                        disabled={(location.servicesCount || 0) > 0}
                       >
                         <DeleteIcon size={18} />
                       </button>
@@ -343,13 +346,16 @@ export const LocationsCatalog: React.FC = () => {
             </tbody>
           </table>
         </div>
+
         <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700 dark:text-gray-400">
                 {t('common:actions.show')}{' '}
                 <span className="font-medium">
-                  {(currentPage - 1) * itemsPerPage + 1}
+                  {locations.length === 0
+                    ? 0
+                    : (currentPage - 1) * itemsPerPage + 1}
                 </span>{' '}
                 {t('common:table.a')}{' '}
                 <span className="font-medium">
@@ -361,10 +367,7 @@ export const LocationsCatalog: React.FC = () => {
               </p>
             </div>
             <div>
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
@@ -374,15 +377,9 @@ export const LocationsCatalog: React.FC = () => {
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <span className="sr-only">Anterior</span>
                   <ChevronLeftIcon size={18} />
                 </button>
-                {Array.from(
-                  {
-                    length: totalPages,
-                  },
-                  (_, i) => i + 1
-                ).map((page) => (
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
@@ -406,7 +403,6 @@ export const LocationsCatalog: React.FC = () => {
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <span className="sr-only">Siguiente</span>
                   <ChevronRightIcon size={18} />
                 </button>
               </nav>
@@ -414,53 +410,41 @@ export const LocationsCatalog: React.FC = () => {
           </div>
         </div>
       </Card>
-      {/* Create/Edit Modal */}
+
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={
           currentLocation
-            ? `${t('location:formEditLocation.title')}${':'} ${
-                currentLocation.name
-              }`
+            ? `${t('location:formEditLocation.title')}: ${currentLocation.name}`
             : t('location:formNewLocationLabel.title')
         }
-        size="lg"
       >
         <CatalogForm
           fields={formFields}
-          values={formValues}
+          values={formValues as unknown as Record<string, never>}
           onChange={handleInputChange}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           errors={formErrors}
         />
       </Modal>
-      {/* Delete Confirmation Modal */}
+
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={handleCloseDeleteModal}
         title={t('location:formDelete.title')}
-        size="md"
+        size="sm"
         footer={
-          <>
-            {/*  <Button
-              variant="outline"
-              onClick={handleCloseDeleteModal}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button> */}
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? t('roles:formDelete.confirmButtonCancel')
-                : t('roles:formDelete.confirmButton')}
-            </Button>
-          </>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isSubmitting || (currentLocation?.servicesCount || 0) > 0}
+          >
+            {isSubmitting
+              ? t('common:actions.delete')
+              : t('location:formDelete.confirmButton')}
+          </Button>
         }
       >
         <div className="py-4">
@@ -469,8 +453,9 @@ export const LocationsCatalog: React.FC = () => {
               i18nKey="location:formDelete.message"
               values={{
                 location: currentLocation?.name,
-                branch: currentLocation?.branch,
+                branch: currentLocation?.branch?.name || '-',
               }}
+              components={[<strong key="location" />, <strong key="branch" />]}
             />
           </p>
         </div>

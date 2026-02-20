@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   PlusIcon,
   Pencil as EditIcon,
@@ -8,91 +8,72 @@ import {
   ChevronLeftIcon,
 } from 'lucide-react'
 import { CatalogForm } from '../../components/ui/CatalogForm'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Trans, useTranslation } from 'react-i18next'
-interface Status {
-  id: number
+import toast, { Toaster } from 'react-hot-toast'
+import { useStatusStore } from '@/utils/store/StatusStore.tsx'
+import {
+  createStatus,
+  deleteStatus,
+  updateStatus,
+} from '@/services/catalogs/status.api.ts'
+
+export interface StatusRecord {
+  id?: string
   name: string
   description: string
-  usedIn: number
+  usedIn?: number
 }
+
+export interface StatusPayload {
+  id?: string
+  name: string
+  description?: string
+}
+
+const initialValues: StatusPayload = {
+  id: '',
+  name: '',
+  description: '',
+}
+
 export const StatusCatalog: React.FC = () => {
   const { t } = useTranslation(['common', 'status'])
-  const [statuses, setStatuses] = useState<Status[]>([
-    {
-      id: 1,
-      name: 'Pendiente',
-      description: 'Servicio registrado pero no iniciado',
-      usedIn: 0,
-    },
-    {
-      id: 2,
-      name: 'En diagnóstico',
-      description: 'Evaluando el problema',
-      usedIn: 8,
-    },
-    {
-      id: 3,
-      name: 'En reparación',
-      description: 'Trabajando en la solución',
-      usedIn: 15,
-    },
-    {
-      id: 4,
-      name: 'Esperando repuesto',
-      description: 'Pendiente de recibir partes',
-      usedIn: 6,
-    },
-    {
-      id: 5,
-      name: 'Listo para entrega',
-      description: 'Reparación finalizada',
-      usedIn: 3,
-    },
-    {
-      id: 6,
-      name: 'Entregado',
-      description: 'Equipo devuelto al cliente',
-      usedIn: 24,
-    },
-    {
-      id: 7,
-      name: 'Cancelado',
-      description: 'Servicio cancelado',
-      usedIn: 2,
-    },
-  ])
+  const { statuses, fetchStatuses } = useStatusStore()
+
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [currentStatus, setCurrentStatus] = useState<Status | null>(null)
-  const [formValues, setFormValues] = useState({
-    name: '',
-    description: '',
-  })
+  const [currentStatus, setCurrentStatus] = useState<StatusRecord | null>(null)
+  const [formValues, setFormValues] = useState<StatusPayload>(initialValues)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
   useEffect(() => {
     if (currentStatus) {
       setFormValues({
+        id: currentStatus.id,
         name: currentStatus.name,
-        description: currentStatus.description,
+        description: currentStatus.description || '',
       })
-    } else {
-      setFormValues({
-        name: '',
-        description: '',
-      })
+      return
     }
+
+    setFormValues(initialValues)
   }, [currentStatus])
 
+  useEffect(() => {
+    fetchStatuses()
+  }, [fetchStatuses])
+
   const itemsPerPage = 5
-  const totalPages = Math.ceil(statuses.length / itemsPerPage)
-  const paginatedServices = statuses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const totalPages = Math.max(1, Math.ceil(statuses.length / itemsPerPage))
+  const paginatedStatuses = useMemo(
+    () =>
+      statuses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [statuses, currentPage]
   )
 
   const handlePageChange = (page: number) => {
@@ -100,41 +81,45 @@ export const StatusCatalog: React.FC = () => {
     window.scrollTo(0, 0)
   }
 
-  const handleOpenModal = (status?: Status) => {
+  const handleOpenModal = (status?: StatusRecord) => {
     setCurrentStatus(status || null)
     setFormErrors({})
     setIsModalOpen(true)
   }
+
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setCurrentStatus(null)
   }
-  const handleOpenDeleteModal = (status: Status) => {
+
+  const handleOpenDeleteModal = (status: StatusRecord) => {
     setCurrentStatus(status)
     setIsDeleteModalOpen(true)
   }
+
   const handleCloseDeleteModal = () => {
     setIsDeleteModalOpen(false)
     setCurrentStatus(null)
   }
+
   const handleInputChange = (name: string, value: string) => {
-    setFormValues({
-      ...formValues,
+    setFormValues((prev) => ({
+      ...prev,
       [name]: value,
-    })
-    // Clear error when field is edited
+    }))
+
     if (formErrors[name]) {
       setFormErrors((prev) => {
-        const newErrors = {
-          ...prev,
-        }
-        delete newErrors[name]
-        return newErrors
+        const next = { ...prev }
+        delete next[name]
+        return next
       })
     }
   }
+
   const validateForm = () => {
     const errors: Record<string, string> = {}
+
     if (!formValues.name.trim()) {
       errors.name = 'El nombre es requerido'
     } else if (
@@ -146,55 +131,65 @@ export const StatusCatalog: React.FC = () => {
     ) {
       errors.name = t('status:formNewStatus.createStatus')
     }
+
     return errors
   }
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errors = validateForm()
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors)
       return
     }
+
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      if (currentStatus) {
-        // Update existing status
-        setStatuses(
-          statuses.map((status) =>
-            status.id === currentStatus.id
-              ? {
-                  ...status,
-                  name: formValues.name,
-                  description: formValues.description,
-                }
-              : status
-          )
-        )
-      } else {
-        // Create new status
-        const newStatus: Status = {
-          id: Math.max(0, ...statuses.map((s) => s.id)) + 1,
-          name: formValues.name,
-          description: formValues.description,
-          usedIn: 0,
+    try {
+      if (formValues.id) {
+        const { status } = await updateStatus(formValues)
+        if (status === 200) {
+          toast.success('Estatus actualizado correctamente')
         }
-        setStatuses([...statuses, newStatus])
+      } else {
+        const { id, ...payload } = formValues
+        const status = await createStatus(payload)
+        if (status.id) {
+          toast.success('Estatus creado correctamente')
+        }
       }
-      setIsSubmitting(false)
+
+      setFormValues(initialValues)
       handleCloseModal()
-    }, 500)
-  }
-  const handleDelete = () => {
-    if (!currentStatus) return
-    setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      setStatuses(statuses.filter((status) => status.id !== currentStatus.id))
+      await fetchStatuses()
+      setCurrentPage(1)
+    } catch (error) {
+      console.error(error)
+      toast.error('No fue posible guardar el estatus')
+    } finally {
       setIsSubmitting(false)
-      handleCloseDeleteModal()
-    }, 500)
+    }
   }
+
+  const handleDelete = async () => {
+    if (!currentStatus?.id) return
+
+    setIsSubmitting(true)
+    try {
+      const { status } = await deleteStatus(currentStatus.id)
+      if (status === 200) {
+        toast.success(t('status:formDelete.success'))
+      }
+      handleCloseDeleteModal()
+      await fetchStatuses()
+      setCurrentPage(1)
+    } catch (error) {
+      console.error(error)
+      toast.error(t('status:formDelete.error'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const formFields = [
     {
       name: 'name',
@@ -210,8 +205,10 @@ export const StatusCatalog: React.FC = () => {
       placeholder: t('status:formPlaceholder.descriptionInput'),
     },
   ]
+
   return (
     <div>
+      <Toaster />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
@@ -237,34 +234,22 @@ export const StatusCatalog: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('status:table.columns.name')}
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('status:table.columns.description')}
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('status:table.columns.usedOn')}
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('common:actions.actions')}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {paginatedServices.map((status) => (
+              {paginatedStatuses.map((status) => (
                 <tr
                   key={status.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
@@ -275,15 +260,15 @@ export const StatusCatalog: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {status.description || (
                       <span className="text-gray-400 dark:text-gray-500 italic">
-                        {t('status:table.columns.noDescriptions')}
+                        {t('status:table.noDescriptions')}
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
                         <FileIcon size={12} className="mr-1" />
-                        {status.usedIn}
+                        {status.usedIn ?? 0}
                       </span>
                     </div>
                   </td>
@@ -299,16 +284,16 @@ export const StatusCatalog: React.FC = () => {
                       <button
                         onClick={() => handleOpenDeleteModal(status)}
                         className={`text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 ${
-                          status.usedIn > 0
+                          (status.usedIn || 0) > 0
                             ? 'opacity-50 cursor-not-allowed'
                             : ''
                         }`}
                         title={
-                          status.usedIn > 0
+                          (status.usedIn || 0) > 0
                             ? t('status:table.deleteTitle')
                             : t('status:table.title')
                         }
-                        disabled={status.usedIn > 0}
+                        disabled={(status.usedIn || 0) > 0}
                       >
                         <DeleteIcon size={18} />
                       </button>
@@ -329,13 +314,14 @@ export const StatusCatalog: React.FC = () => {
             </tbody>
           </table>
         </div>
+
         <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700 dark:text-gray-400">
                 {t('common:actions.show')}{' '}
                 <span className="font-medium">
-                  {(currentPage - 1) * itemsPerPage + 1}
+                  {statuses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}
                 </span>{' '}
                 {t('common:table.a')}{' '}
                 <span className="font-medium">
@@ -347,10 +333,7 @@ export const StatusCatalog: React.FC = () => {
               </p>
             </div>
             <div>
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
@@ -360,15 +343,9 @@ export const StatusCatalog: React.FC = () => {
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <span className="sr-only">Anterior</span>
                   <ChevronLeftIcon size={18} />
                 </button>
-                {Array.from(
-                  {
-                    length: totalPages,
-                  },
-                  (_, i) => i + 1
-                ).map((page) => (
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
@@ -392,7 +369,6 @@ export const StatusCatalog: React.FC = () => {
                       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <span className="sr-only">Siguiente</span>
                   <ChevronRightIcon size={18} />
                 </button>
               </nav>
@@ -401,19 +377,18 @@ export const StatusCatalog: React.FC = () => {
         </div>
       </Card>
 
-      {/* Create/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={
           currentStatus
-            ? `${t('status:formEditStatus.title')} ${currentStatus.name}`
+            ? `${t('status:formEditStatus.title')}: ${currentStatus.name}`
             : t('status:formNewStatus.title')
         }
       >
         <CatalogForm
           fields={formFields}
-          values={formValues}
+          values={formValues as unknown as Record<string, never>}
           onChange={handleInputChange}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
@@ -421,31 +396,21 @@ export const StatusCatalog: React.FC = () => {
         />
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={handleCloseDeleteModal}
         title={t('status:formDelete.title')}
         size="sm"
         footer={
-          <>
-            {/*  <Button
-              variant="outline"
-              onClick={handleCloseDeleteModal}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button> */}
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isSubmitting || (currentStatus?.usedIn || 0) > 0}
-            >
-              {isSubmitting
-                ? t('status:formDelete.confirmButtonCancel')
-                : t('status:formDelete.confirmButton')}
-            </Button>
-          </>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isSubmitting || (currentStatus?.usedIn || 0) > 0}
+          >
+            {isSubmitting
+              ? t('status:formDelete.confirmButtonCancel')
+              : t('status:formDelete.confirmButton')}
+          </Button>
         }
       >
         <div className="py-4">
@@ -455,16 +420,6 @@ export const StatusCatalog: React.FC = () => {
               values={{ status: currentStatus?.name }}
             />
           </p>
-          {/*  {currentStatus && currentStatus.usedIn > 0 && (
-            <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-md">
-              <p className="text-sm text-red-800 dark:text-red-400">
-                <span className="font-medium">Error:</span> Este estado no se
-                puede eliminar porque está siendo utilizado en{' '}
-                {currentStatus.usedIn} servicio
-                {currentStatus.usedIn !== 1 ? 's' : ''}.
-              </p>
-            </div>
-          )} */}
         </div>
       </Modal>
     </div>

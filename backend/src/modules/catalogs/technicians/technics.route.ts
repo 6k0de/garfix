@@ -1,6 +1,6 @@
 import { Router } from 'express'
 // @ts-ignore
-import * as t from './technics.controller.ts'
+import * as t from './technics.controller.js'
 
 const te = Router()
 

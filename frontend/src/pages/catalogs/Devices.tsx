@@ -7,7 +7,7 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { CatalogForm } from '@/components/ui/CatalogForm'
@@ -289,7 +289,7 @@ export const DevicesCatalog: React.FC = () => {
                     <div className="flex items-center">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
                         <DeviceIcon size={12} className="mr-1" />
-                        {deviceType.devicesCount}
+                        {deviceType.devicesCount ?? 0}
                       </span>
                     </div>
                   </td>
@@ -318,16 +318,16 @@ export const DevicesCatalog: React.FC = () => {
                       <button
                         onClick={() => handleOpenDeleteModal(deviceType)}
                         className={`text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 ${
-                          deviceType.devicesCount > 0
+                          (deviceType.devicesCount ?? 0) > 0
                             ? 'opacity-50 cursor-not-allowed'
                             : ''
                         }`}
                         title={
-                          deviceType.devicesCount > 0
+                          (deviceType.devicesCount ?? 0) > 0
                             ? 'No se puede eliminar porque está en uso'
                             : 'Eliminar'
                         }
-                        disabled={deviceType.devicesCount > 0}
+                        disabled={(deviceType.devicesCount ?? 0) > 0}
                       >
                         <DeleteIcon size={18} />
                       </button>

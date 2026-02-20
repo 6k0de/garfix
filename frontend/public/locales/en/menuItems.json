@@ -12,6 +12,8 @@
     "catalogs": {
       "branches": "Branches",
       "clients": "Clients",
+      "typeClients": "Client Types",
+      "documentTypes": "Document Types",
       "technics": "Technicians",
       "roles": "Roles",
       "status": "Statuses",

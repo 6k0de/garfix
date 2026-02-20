@@ -1,8 +1,9 @@
 import { Request, Response } from 'express'
-import { Prisma, PrismaClient } from '../../../../generated/prisma'
-import { roleSchema, updateRoleSchema } from './role.schema'
+import { Prisma } from '@prisma/client'
+import { roleSchema, updateRoleSchema } from './role.schema.js'
+import { prisma } from '../../../lib/prisma.js'
+import { ensureDefaultRoles } from '../../../lib/defaultCatalogs.js'
 
-const prisma = new PrismaClient()
 export const createRole = async (req: Request, res: Response) => {
   const role = roleSchema.safeParse(req.body)
   if (!role.success) {
@@ -53,6 +54,8 @@ export const createRole = async (req: Request, res: Response) => {
 
 export const getAllRoles = async (_: Request, res: Response) => {
   try {
+    await ensureDefaultRoles()
+
     const roles = await prisma.role.findMany({
       select: {
         id: true,

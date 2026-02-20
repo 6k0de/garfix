@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import * as d from './devices.controller.ts'
+import * as d from './devices.controller.js'
 const de = Router()
 
 //GET

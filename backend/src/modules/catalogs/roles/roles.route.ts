@@ -1,6 +1,6 @@
 import { Router } from 'express'
 // @ts-ignore
-import * as r from './roles.controller.ts'
+import * as r from './roles.controller.js'
 
 const ro = Router()
 

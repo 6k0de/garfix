@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button } from './button'
+import { Button } from './Button'
 import {
   Select,
   SelectContent,
@@ -19,23 +19,27 @@ interface FormField {
   }[]
   placeholder?: string
 }
-interface CatalogFormProps {
+interface CatalogFormProps<TValues extends object = Record<string, unknown>> {
   fields: FormField[]
-  values: Record<string, never>
+  values: TValues
   onChange: (name: string, value: string) => void
   onSubmit: (e: React.FormEvent) => void
   isSubmitting: boolean
   errors: Record<string, string>
 }
-export const CatalogForm: React.FC<CatalogFormProps> = ({
+export const CatalogForm = <TValues extends object>({
   fields,
   values,
   onChange,
   onSubmit,
   isSubmitting,
   errors,
-}) => {
+}: CatalogFormProps<TValues>) => {
   const { t } = useTranslation(['common', 'roles'])
+  const getFieldValue = (name: string) => {
+    const value = (values as Record<string, unknown>)[name]
+    return typeof value === 'string' ? value : ''
+  }
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {fields.map((field) => (
@@ -51,7 +55,7 @@ export const CatalogForm: React.FC<CatalogFormProps> = ({
             <textarea
               id={field.name}
               name={field.name}
-              value={values[field.name] || ''}
+              value={getFieldValue(field.name)}
               onChange={(e) => onChange(field.name, e.target.value)}
               required={field.required}
               placeholder={field.placeholder}
@@ -60,9 +64,9 @@ export const CatalogForm: React.FC<CatalogFormProps> = ({
             />
           ) : field.type === 'select' ? (
             <Select
-              key={field.name + String(values[field.name] ?? '')}
+              key={field.name + getFieldValue(field.name)}
               name={field.name}
-              value={values[field.name] || ''}
+              value={getFieldValue(field.name)}
               onValueChange={(val) => onChange(field.name, val)}
             >
               <SelectTrigger className="bg-white dark:bg-gray-800 w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -70,11 +74,9 @@ export const CatalogForm: React.FC<CatalogFormProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((option) => (
-                  <>
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  </>
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -83,7 +85,7 @@ export const CatalogForm: React.FC<CatalogFormProps> = ({
               type="text"
               id={field.name}
               name={field.name}
-              value={values[field.name] || ''}
+              value={getFieldValue(field.name)}
               onChange={(e) => onChange(field.name, e.target.value)}
               required={field.required}
               placeholder={field.placeholder}
@@ -98,7 +100,7 @@ export const CatalogForm: React.FC<CatalogFormProps> = ({
         </div>
       ))}
       <div className="flex justify-end pt-4">
-        <Button type="default" variant="secondary" disabled={isSubmitting}>
+        <Button type="submit" variant="secondary" disabled={isSubmitting}>
           {isSubmitting ? (
             <span className="flex items-center">
               <svg

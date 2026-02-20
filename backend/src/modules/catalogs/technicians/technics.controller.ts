@@ -1,8 +1,8 @@
 import { Request, Response } from 'express'
-import { Prisma, PrismaClient } from '../../../../generated/prisma'
-import { technicSchema, updateTechnicScehma } from './technic.schema'
-
-const prisma = new PrismaClient()
+import { Prisma } from '@prisma/client'
+import { technicSchema, updateTechnicScehma } from './technic.schema.js'
+import { prisma } from '../../../lib/prisma.js'
+import { ensureDefaultCompany } from '../../../lib/defaultCatalogs.js'
 
 export const createTechnics = async (req: Request, res: Response) => {
   const persed = technicSchema.safeParse(req.body)
@@ -11,18 +11,16 @@ export const createTechnics = async (req: Request, res: Response) => {
       .status(400)
       .json({ error: 'Datos invalidos', details: persed.error.issues })
   }
-  const companyIdExample = 'f3507588-2ae7-4bf4-81e5-c882bd632593'
   const { name, email, branchId, roleId } = persed.data
-  console.log(persed)
 
   const [roleExists, branchExists] = await Promise.all([
     prisma.role.findUnique({ where: { id: roleId }, select: { id: true } }),
     branchId
       ? prisma.branch.findUnique({
           where: { id: branchId },
-          select: { id: true },
+          select: { id: true, companyId: true },
         })
-      : Promise.resolve({ id: null }),
+      : Promise.resolve(null),
   ])
 
   if (!roleExists) {
@@ -38,6 +36,9 @@ export const createTechnics = async (req: Request, res: Response) => {
     })
   }
 
+  const companyId =
+    branchExists?.companyId ?? (await ensureDefaultCompany()).id
+
   try {
     const technic = await prisma.user.create({
       data: {
@@ -45,7 +46,7 @@ export const createTechnics = async (req: Request, res: Response) => {
         email,
         branchId,
         roleId,
-        companyId: companyIdExample,
+        companyId,
       },
       select: {
         id: true,
@@ -82,7 +83,11 @@ export const getAllTechnicians = async(_:Request, res: Response) => {
   try{
     const technicians = await prisma.user.findMany({
       where: {
-        role: {name: 'Técnico'}
+        role: {
+          name: {
+            in: ['Técnico', 'Tecnico'],
+          },
+        },
       },
       select: {
         id: true,

@@ -1,16 +1,5 @@
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-
-import {
-  CheckIcon,
-  MapPinIcon,
-  PlusIcon,
-  SearchIcon,
-  UserCircleIcon,
-  UserIcon,
-} from 'lucide-react'
-import type React from 'react'
-import { useEffect, useState } from 'react'
 import {
   Select,
   SelectContent,
@@ -18,180 +7,179 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select'
+import { CheckIcon, PlusIcon, SearchIcon, UserCircleIcon, UserIcon } from 'lucide-react'
+import type React from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type {
+  NewClientFormValue,
+  ServiceCatalogsResponse,
+  ServiceClientRecord,
+  ServiceFormData,
+} from '../service.types'
 
-const clientDataExample = [
-  {
-    id: 1,
-    name: 'Cliente 1',
-    phone: '1234567890',
-    email: 'cliente1@example.com',
-    address: 'Calle 123, Ciudad',
-    typeClient: 'personal',
-    documentType: 'DNI',
-  },
-  {
-    id: 2,
-    name: 'Cliente 2',
-    email: 'cliente2@example.com',
-    phone: '9876543210',
-    address: 'Avenida 456, Pueblo',
-  },
-  {
-    id: 3,
-    name: 'Cliente 3',
-    email: 'cliente3@example.com',
-    phone: '5555555555',
-    address: 'Calle 789, Pueblo',
-  },
-  {
-    id: 4,
-    name: 'Cliente 4',
-    email: 'cliente4@example.com',
-    phone: '1112223333',
-    address: 'Calle 101, Pueblo',
-  },
-  {
-    id: 5,
-    name: 'Cliente 5',
-    email: 'cliente5@example.com',
-    phone: '2223334444',
-    address: 'Calle 102, Pueblo',
-  },
-]
-export const ClientFormStep: React.FC<{
-  formData: any
-  setFormData: React.Dispatch<React.SetStateAction<any>>
+const buildDefaultNewClient = (
+  catalogs: ServiceCatalogsResponse,
+  preferredBranchId: string
+): NewClientFormValue => ({
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  typeClientId: catalogs.typeClients[0]?.id || '',
+  documentTypeId: catalogs.documentTypes[0]?.id || '',
+  branchId: preferredBranchId || catalogs.branches[0]?.id || '',
+})
+
+interface ClientFormStepProps {
+  formData: ServiceFormData
+  setFormData: React.Dispatch<React.SetStateAction<ServiceFormData>>
   nextStep: () => void
-}> = ({ formData, setFormData, nextStep }) => {
+  catalogs: ServiceCatalogsResponse
+}
+
+export const ClientFormStep: React.FC<ClientFormStepProps> = ({
+  formData,
+  setFormData,
+  nextStep,
+  catalogs,
+}) => {
   const { t } = useTranslation(['common', 'services'])
-
   const [searchQuery, setSearchQuery] = useState('')
-  const [clients, setClients] = useState(clientDataExample)
-  const [showNewClientForm, setShowNewClientForm] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [selectedClient, setSelectedClient] = useState<any>(null)
-  const [filteredClients, setFilteredClients] = useState(clientDataExample)
+  const [showNewClientForm, setShowNewClientForm] = useState(
+    Boolean(formData.newClient) || catalogs.clients.length === 0
+  )
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value
-    setSearchQuery(query)
-    if (query.trim() === '') {
-      setFilteredClients(clientDataExample)
-    } else {
-      const filtered = clientDataExample.filter(
-        (client) =>
-          client.name.toLowerCase().includes(query.toLowerCase()) ||
-          client.phone.includes(query) ||
-          client.email.toLowerCase().includes(query.toLowerCase())
-      )
-      setFilteredClients(filtered)
+  const branchNameById = useMemo(
+    () =>
+      new Map(catalogs.branches.map((branch) => [branch.id, branch.name] as const)),
+    [catalogs.branches]
+  )
+
+  const filteredClients = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) {
+      return catalogs.clients
     }
-  }
-
-  const handleSelectClient = (client: any) => {
-    setSelectedClient(client)
-    setFormData({
-      ...formData,
-      client,
+    return catalogs.clients.filter((client) => {
+      return (
+        client.name.toLowerCase().includes(query) ||
+        client.phone.toLowerCase().includes(query) ||
+        client.email.toLowerCase().includes(query)
+      )
     })
+  }, [catalogs.clients, searchQuery])
+
+  const selectedClient = formData.client
+  const newClient =
+    formData.newClient ??
+    buildDefaultNewClient(catalogs, formData.serviceDetails.branchId)
+
+  const handleSelectClient = (client: ServiceClientRecord) => {
+    setFormData((prev) => ({
+      ...prev,
+      client,
+      clientId: client.id,
+      newClient: null,
+    }))
+    setErrors({})
   }
 
-  const handleNewClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
+  const handleShowNewClientForm = () => {
+    setShowNewClientForm(true)
+    setFormData((prev) => ({
+      ...prev,
+      client: null,
+      clientId: null,
+      newClient: prev.newClient ?? buildDefaultNewClient(catalogs, prev.serviceDetails.branchId),
+    }))
+    setErrors({})
+  }
+
+  const handleHideNewClientForm = () => {
+    setShowNewClientForm(false)
+    setErrors({})
+  }
+
+  const handleNewClientChange = (name: keyof NewClientFormValue, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      client: null,
+      clientId: null,
       newClient: {
-        ...formData.newClient,
+        ...(prev.newClient ?? buildDefaultNewClient(catalogs, prev.serviceDetails.branchId)),
         [name]: value,
       },
-    })
-    // Clear error when field is edited
+    }))
+
     if (errors[name]) {
       setErrors((prev) => {
-        const newErrors = {
-          ...prev,
-        }
-        delete newErrors[name]
-        return newErrors
+        const nextErrors = { ...prev }
+        delete nextErrors[name]
+        return nextErrors
       })
     }
   }
 
-  const handleSaveNewClientProvisional = (goNext = false) => {
-    const validationErrors = validateNewClient()
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
-
-    const tempClient = {
-      id: `tmp-${Date.now()}`,
-      ...formData.newClient,
-      isNew: true, // <- bandera clave
-    }
-
-    // lo agregamos a la lista visible
-    setClients((prev) => [tempClient, ...prev])
-    setSelectedClient(tempClient)
-
-    // lo guardamos como “cliente elegido” del form
-    setFormData((prev: any) => ({
-      ...prev,
-      client: tempClient,
-      newClient: null, // limpiamos el form de nuevo cliente
-    }))
-
-    setShowNewClientForm(false)
-    setErrors({})
-
-    if (goNext) nextStep()
-  }
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredClients(clients)
-    } else {
-      const q = searchQuery.toLowerCase()
-      setFilteredClients(
-        clients.filter(
-          (c) =>
-            c.name.toLowerCase().includes(q) ||
-            c.phone?.includes(searchQuery) ||
-            c.email?.toLowerCase().includes(q)
-        )
-      )
-    }
-  }, [clients, searchQuery])
-
   const validateNewClient = () => {
-    const newErrors: Record<string, string> = {}
-    const { newClient } = formData
-    if (!newClient?.name)
-      newErrors.name = t('services:first-step.validations.name')
-    if (!newClient?.phone)
-      newErrors.phone = t('services:first-step.validations.phone')
-    if (newClient?.email && !/\S+@\S+\.\S+/.test(newClient.email)) {
-      newErrors.email = t('services:first-step.validations.email')
+    const nextErrors: Record<string, string> = {}
+
+    if (!newClient.name.trim()) {
+      nextErrors.name = t('services:first-step.validations.name')
     }
-    return newErrors
+    if (!newClient.phone.trim()) {
+      nextErrors.phone = t('services:first-step.validations.phone')
+    }
+    if (!newClient.email.trim()) {
+      nextErrors.email = t('services:first-step.validations.email')
+    } else if (!/\S+@\S+\.\S+/.test(newClient.email)) {
+      nextErrors.email = t('services:first-step.validations.email')
+    }
+    if (!newClient.address.trim()) {
+      nextErrors.address = 'La dirección es requerida'
+    }
+    if (!newClient.typeClientId) {
+      nextErrors.typeClientId = 'Selecciona un tipo de cliente'
+    }
+    if (!newClient.documentTypeId) {
+      nextErrors.documentTypeId = 'Selecciona un tipo de documento'
+    }
+    if (!newClient.branchId) {
+      nextErrors.branchId = 'Selecciona una sucursal'
+    }
+
+    return nextErrors
   }
 
   const handleContinue = () => {
-    if (selectedClient) {
-      nextStep()
-    } else if (showNewClientForm) {
+    if (showNewClientForm) {
       const validationErrors = validateNewClient()
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors)
         return
       }
+
+      setFormData((prev) => ({
+        ...prev,
+        client: null,
+        clientId: null,
+        newClient,
+      }))
+      setErrors({})
       nextStep()
-    } else {
-      setErrors({
-        general: t('services:errorGeneral'),
-      })
+      return
     }
+
+    if (formData.clientId) {
+      setErrors({})
+      nextStep()
+      return
+    }
+
+    setErrors({
+      general: t('services:errorGeneral'),
+    })
   }
 
   return (
@@ -201,45 +189,43 @@ export const ClientFormStep: React.FC<{
       </h2>
       {errors.general && (
         <div className="mb-2 p-3 rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800">
-          <p className="text-sm text-red-700 dark:text-red-400">
-            {errors.general}
-          </p>
+          <p className="text-sm text-red-700 dark:text-red-400">{errors.general}</p>
         </div>
       )}
+
       {!showNewClientForm && (
         <>
           <div className="mb-6 flex gap-3">
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <SearchIcon size={18} className="text-gray-400" />
-                <div className="flex justify-center"></div>
               </div>
               <input
                 type="text"
-                className="bg-white  dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md leading-5 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out sm:text-sm"
+                className="bg-white dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md leading-5 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out sm:text-sm"
                 placeholder={t('services:first-step.placeholder.searchInput')}
                 value={searchQuery}
-                onChange={handleSearch}
+                onChange={(event) => setSearchQuery(event.target.value)}
               />
             </div>
             <Button
               variant="outline"
-              onClick={() => setShowNewClientForm(true)}
+              onClick={handleShowNewClientForm}
               icon={<PlusIcon size={16} />}
             >
               {t('services:first-step.buttonAddNewUser')}
             </Button>
           </div>
-          <div className="mb-6 grid grid-cols-2 gap-4">
+
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredClients.length > 0 ? (
               filteredClients.map((client) => (
                 <div
                   key={client.id}
-                  className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${
-                    selectedClient?.id === client.id
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700'
-                  }`}
+                  className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${selectedClient?.id === client.id
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                    }`}
                   onClick={() => handleSelectClient(client)}
                 >
                   <div className="flex items-center justify-between">
@@ -259,35 +245,43 @@ export const ClientFormStep: React.FC<{
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {client.address}
                         </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {branchNameById.get(client.branchId) || '-'}
+                        </p>
                       </div>
                     </div>
                     {selectedClient?.id === client.id && (
-                      <CheckIcon
-                        size={20}
-                        className="text-indigo-600 dark:text-indigo-400"
-                      />
+                      <CheckIcon size={20} className="text-indigo-600 dark:text-indigo-400" />
                     )}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-500 dark:text-gray-400">
-                  {t('services:noData')}
+              <div className="text-center py-8 md:col-span-2">
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  No hay clientes registrados. Crea uno nuevo para continuar.
                 </p>
+                <Button
+                  variant="outline"
+                  onClick={handleShowNewClientForm}
+                  icon={<PlusIcon size={16} />}
+                >
+                  Crear cliente
+                </Button>
               </div>
             )}
           </div>
         </>
       )}
+
       {showNewClientForm && (
         <Card className="p-6 mb-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {t('common:actions.new')} {t('services:first-step.stepper.one')}
           </h3>
           <div className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-1 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <label
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -303,26 +297,21 @@ export const ClientFormStep: React.FC<{
                     type="text"
                     id="name"
                     name="name"
-                    className={`bg-white dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border ${
-                      errors.name
-                        ? 'border-red-300 dark:border-red-700'
-                        : 'border-gray-300 dark:border-gray-700'
-                    } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder={t(
-                      'services:first-step.placeholder.newNameInput'
-                    )}
-                    value={formData.newClient?.name || ''}
-                    onChange={handleNewClientChange}
+                    className={`bg-white dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border ${errors.name
+                      ? 'border-red-300 dark:border-red-700'
+                      : 'border-gray-300 dark:border-gray-700'
+                      } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                    placeholder={t('services:first-step.placeholder.newNameInput')}
+                    value={newClient.name}
+                    onChange={(event) => handleNewClientChange('name', event.target.value)}
                   />
                 </div>
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.name}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
                 )}
               </div>
 
-              <div className="flex-1 w-full">
+              <div>
                 <label
                   htmlFor="phone"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -330,215 +319,181 @@ export const ClientFormStep: React.FC<{
                   {t('services:first-step.labelInput.newLabelUserPhone')}{' '}
                   <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    className={`bg-white dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border ${
-                      errors.phone
-                        ? 'border-red-300 dark:border-red-700'
-                        : 'border-gray-300 dark:border-gray-700'
+                <input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  className={`bg-white dark:bg-gray-800 block w-full py-2 px-3 border ${errors.phone
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-gray-300 dark:border-gray-700'
                     } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="(123) 456-7890"
-                    value={formData.newClient?.phone || ''}
-                    onChange={handleNewClientChange}
-                  />
-                </div>
+                  placeholder={t('services:first-step.placeholder.newPhoneInput')}
+                  value={newClient.phone}
+                  onChange={(event) => handleNewClientChange('phone', event.target.value)}
+                />
                 {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.phone}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.phone}</p>
                 )}
               </div>
-            </div>
 
-            <div className="flex gap-4">
-              <div className="flex-1 w-full">
+              <div>
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  {t('services:first-step.labelInput.newLabelUserEmail')}
+                  {t('services:first-step.labelInput.newLabelUserEmail')}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                      ></path>
-                    </svg>
-                  </div>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    className={`bg-white dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border ${
-                      errors.email
-                        ? 'border-red-300 dark:border-red-700'
-                        : 'border-gray-300 dark:border-gray-700'
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className={`bg-white dark:bg-gray-800 block w-full py-2 px-3 border ${errors.email
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-gray-300 dark:border-gray-700'
                     } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder={t(
-                      'services:first-step.placeholder.newEmailInput'
-                    )}
-                    value={formData.newClient?.email || ''}
-                    onChange={handleNewClientChange}
-                  />
-                </div>
+                  placeholder={t('services:first-step.placeholder.newEmailInput')}
+                  value={newClient.email}
+                  onChange={(event) => handleNewClientChange('email', event.target.value)}
+                />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.email}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
                 )}
               </div>
-              <div className="flex-1 w-full">
+
+              <div>
                 <label
                   htmlFor="address"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  {t('services:first-step.labelInput.newLabelUserAddress')}
+                  {t('services:first-step.labelInput.newLabelUserAddress')}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MapPinIcon size={18} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    className="bg-white dark:bg-gray-800 block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder={t(
-                      'services:first-step.placeholder.newAddressInput'
-                    )}
-                    value={formData.newClient?.address || ''}
-                    onChange={handleNewClientChange}
-                  />
-                </div>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  className={`bg-white dark:bg-gray-800 block w-full py-2 px-3 border ${errors.address
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-gray-300 dark:border-gray-700'
+                    } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                  placeholder={t('services:first-step.placeholder.newAddressInput')}
+                  value={newClient.address}
+                  onChange={(event) => handleNewClientChange('address', event.target.value)}
+                />
+                {errors.address && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.address}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="flex gap-4">
-              <div className="flex-1 w-full">
-                <label
-                  htmlFor="clientType"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  {t('services:first-step.labelInput.newLabelUserTypeClient')}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tipo de cliente <span className="text-red-500">*</span>
                 </label>
                 <Select
-                  value={formData.newClient?.typeClient ?? ''}
-                  onValueChange={(val) =>
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      newClient: {
-                        ...(prev.newClient ?? {}),
-                        typeClient: val,
-                      },
-                    }))
-                  }
+                  value={newClient.typeClientId}
+                  onValueChange={(value) => handleNewClientChange('typeClientId', value)}
                 >
-                  <SelectTrigger className="w-full py-4 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <SelectValue
-                      placeholder={t(
-                        'services:first-step.placeholder.newTypeClientInput'
-                      )}
-                    />
+                  <SelectTrigger
+                    className={`bg-white dark:bg-gray-800 w-full py-2 px-3 border ${errors.typeClientId
+                      ? 'border-red-300 dark:border-red-700'
+                      : 'border-gray-300 dark:border-gray-700'
+                      } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                  >
+                    <SelectValue placeholder="Selecciona un tipo de cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="personal"> Personal </SelectItem>
-                    <SelectItem value="empresa"> Empresa </SelectItem>
+                    {catalogs.typeClients.map((typeClient) => (
+                      <SelectItem key={typeClient.id} value={typeClient.id}>
+                        {typeClient.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {errors.typeClientId && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.typeClientId}
+                  </p>
+                )}
               </div>
 
-              <div className="flex-1 w-full">
-                <label
-                  htmlFor="documentType"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  {t('services:first-step.labelInput.newLabelUserDocumentType')}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tipo de documento <span className="text-red-500">*</span>
                 </label>
                 <Select
-                  value={formData.newClient?.documentType ?? ''}
-                  onValueChange={(val) =>
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      newClient: {
-                        ...(prev.newClient ?? {}),
-                        documentType: val,
-                      },
-                    }))
-                  }
+                  value={newClient.documentTypeId}
+                  onValueChange={(value) => handleNewClientChange('documentTypeId', value)}
                 >
-                  <SelectTrigger className="w-full py-4 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <SelectValue
-                      placeholder={t(
-                        'services:first-step.placeholder.newDocumentType'
-                      )}
-                    />
+                  <SelectTrigger
+                    className={`bg-white dark:bg-gray-800 w-full py-2 px-3 border ${errors.documentTypeId
+                      ? 'border-red-300 dark:border-red-700'
+                      : 'border-gray-300 dark:border-gray-700'
+                      } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                  >
+                    <SelectValue placeholder="Selecciona un tipo de documento" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="passaporte"> PASSAPORTE </SelectItem>
-                    <SelectItem value="ine"> INE </SelectItem>
-                    <SelectItem value="rfc"> RFC </SelectItem>
+                    {catalogs.documentTypes.map((documentType) => (
+                      <SelectItem key={documentType.id} value={documentType.id}>
+                        {documentType.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {errors.documentTypeId && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.documentTypeId}
+                  </p>
+                )}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('common:others.branch')} <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={newClient.branchId}
+                  onValueChange={(value) => handleNewClientChange('branchId', value)}
+                >
+                  <SelectTrigger
+                    className={`bg-white dark:bg-gray-800 w-full py-2 px-3 border ${errors.branchId
+                      ? 'border-red-300 dark:border-red-700'
+                      : 'border-gray-300 dark:border-gray-700'
+                      } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                  >
+                    <SelectValue placeholder="Selecciona una sucursal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogs.branches.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.branchId && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.branchId}
+                  </p>
+                )}
               </div>
             </div>
-          </div>
-
-          <div className="mt-6 flex items-center">
-            <Button
-              variant="destructive"
-              className="mr-3"
-              onClick={() => {
-                setShowNewClientForm(false)
-                setFormData({
-                  ...formData,
-                  newClient: null,
-                })
-              }}
-            >
-              {t('common:actions.cancel')}
-
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSaveNewClientProvisional(false)} // solo guardar provisional
-              className="ml-auto"
-            >
-              {t('services:first-step.buttonSaveandUseNewUser')}
-            </Button>
           </div>
         </Card>
       )}
-      <div className="mt-8 flex justify-end">
-        <Button variant="default" onClick={handleContinue} className="ml-3">
+
+      <div className="mt-8 flex justify-between">
+        <div>
+          {showNewClientForm && catalogs.clients.length > 0 && (
+            <Button variant="outline" onClick={handleHideNewClientForm}>
+              {t('common:actions.cancel')}
+            </Button>
+          )}
+        </div>
+        <Button variant="default" onClick={handleContinue}>
           {t('common:actions.continue')}
         </Button>
       </div>
