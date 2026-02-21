@@ -6,7 +6,7 @@ import { DeviceStep } from './StepFormService/DeviceStep-secondStep'
 import { ServiceDetailStep } from './StepFormService/ServiceDetails-thirdStep'
 import { SumaryStep } from './StepFormService/Summary-fourStep'
 import { Card } from '@/components/ui/Card'
-import { CheckIcon, ClipboardIcon } from 'lucide-react'
+import { CheckIcon, ClipboardIcon, QrCodeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Stepper from '@/components/ui/Stepper'
 import { useTranslation } from 'react-i18next'
@@ -23,6 +23,7 @@ import type {
   ServiceFormData,
 } from './service.types'
 import toast, { Toaster } from 'react-hot-toast'
+import { ServiceQrModal } from '@/components/services/ServiceQrModal'
 
 const emptyCatalogs: ServiceCatalogsResponse = {
   clients: [],
@@ -49,8 +50,6 @@ const buildInitialFormData = (): ServiceFormData => ({
     qrCode: '',
   },
 })
-
-const randomCode = () => `SRV-${Math.floor(100000 + Math.random() * 900000)}`
 
 const mapServiceDetailToFormData = (
   service: ServiceDetailResponse
@@ -95,6 +94,8 @@ export const CreateService: React.FC = () => {
   const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true)
   const [success, setSuccess] = useState(false)
   const [createdCode, setCreatedCode] = useState('')
+  const [createdQrCode, setCreatedQrCode] = useState('')
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false)
   const [catalogs, setCatalogs] = useState<ServiceCatalogsResponse>(emptyCatalogs)
   const [formData, setFormData] = useState<ServiceFormData>(buildInitialFormData)
 
@@ -123,7 +124,6 @@ export const CreateService: React.FC = () => {
             ...prev.serviceDetails,
             branchId: prev.serviceDetails.branchId || data.branches[0]?.id || '',
             statusId: prev.serviceDetails.statusId || data.statuses[0]?.id || '',
-            qrCode: prev.serviceDetails.qrCode || randomCode(),
           },
         }))
       } catch (error) {
@@ -184,10 +184,10 @@ export const CreateService: React.FC = () => {
         statusId: formData.serviceDetails.statusId,
         observations: formData.serviceDetails.observations.trim() || null,
         code: formData.serviceDetails.code.trim() || null,
-        qrCode: formData.serviceDetails.qrCode.trim() || null,
+        qrCode: isEditMode ? formData.serviceDetails.qrCode.trim() || null : null,
       },
     }
-  }, [formData])
+  }, [formData, isEditMode])
 
   const handleSubmit = async () => {
     if (!payload.clientId && !payload.newClient) {
@@ -203,7 +203,11 @@ export const CreateService: React.FC = () => {
           : await createService(payload)
 
       setCreatedCode(response.code ?? '')
+      setCreatedQrCode(response.qrCode ?? '')
       setSuccess(true)
+      if (response.qrCode) {
+        setIsQrModalOpen(true)
+      }
       toast.success(
         isEditMode
           ? t('services:updateSuccess')
@@ -299,7 +303,16 @@ export const CreateService: React.FC = () => {
               {isEditMode ? t('services:updateQrCodeMessage') : t('services:qrCodeMessage')}{' '}
               {createdCode || 'N/A'}
             </p>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              {createdQrCode && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsQrModalOpen(true)}
+                  icon={<QrCodeIcon size={18} />}
+                >
+                  Ver código QR
+                </Button>
+              )}
               <Button
                 variant="primary"
                 onClick={() => navigate('/services/list')}
@@ -320,6 +333,14 @@ export const CreateService: React.FC = () => {
           </>
         )}
       </div>
+      {createdQrCode && (
+        <ServiceQrModal
+          isOpen={isQrModalOpen}
+          onClose={() => setIsQrModalOpen(false)}
+          qrCode={createdQrCode}
+          serviceCode={createdCode}
+        />
+      )}
     </>
   )
 }

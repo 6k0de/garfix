@@ -145,6 +145,14 @@ export interface CreateServicePayload {
   }
 }
 
+export interface ServiceMutationResponse {
+  id: number
+  code: string
+  qrCode: string
+  clientId: string
+  devicesCount: number
+}
+
 export interface ServiceListRecord {
   id: number
   code: string
@@ -156,4 +164,60 @@ export interface ServiceListRecord {
   status: string
   qrCode: string
   devicesCount: number
+}
+
+export interface ServiceEvidenceAttachment {
+  id: string
+  url: string
+  relativeUrl: string
+  description: string | null
+  createdAt: string
+  originalBytes?: number
+  compressedBytes?: number
+}
+
+export interface ServiceEvidenceResponse {
+  serviceRequest: {
+    id: number
+    code: string
+    qrCode: string
+    receptionDate: string
+    observations: string | null
+    status: {
+      id: string
+      name: string
+    }
+    branch: {
+      id: string
+      name: string
+    }
+    client: {
+      id: string
+      name: string
+    }
+  }
+  evidence: {
+    attachments: ServiceEvidenceAttachment[]
+  }
+  upload: {
+    enabled: boolean
+    maxFilesPerUpload: number
+    fieldName: string
+  }
+  cleanupPolicy: {
+    retentionDays: number
+    terminalAt: string | null
+    expiresAt: string | null
+    expired: boolean
+  }
+}
+
+export interface UploadEvidenceResponse {
+  serviceRequest: {
+    id: number
+    code: string
+    qrCode: string
+  }
+  uploadedCount: number
+  attachments: ServiceEvidenceAttachment[]
 }

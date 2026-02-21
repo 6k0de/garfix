@@ -15,6 +15,7 @@ import {
   FilterIcon,
   Pencil as EditIcon,
   PlusIcon,
+  QrCodeIcon,
   SearchIcon,
 } from 'lucide-react'
 import type React from 'react'
@@ -24,6 +25,7 @@ import { useNavigate } from 'react-router-dom'
 import { getAllServices } from '@/services/service/service.api'
 import type { ServiceListRecord } from './service.types'
 import toast, { Toaster } from 'react-hot-toast'
+import { ServiceQrModal } from '@/components/services/ServiceQrModal'
 
 export const ServicesList: React.FC = () => {
   const { t } = useTranslation(['common', 'list-service'])
@@ -38,6 +40,9 @@ export const ServicesList: React.FC = () => {
     dateFrom: '',
     dateTo: '',
   })
+  const [selectedQrService, setSelectedQrService] = useState<ServiceListRecord | null>(
+    null
+  )
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -421,7 +426,7 @@ export const ServicesList: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     {t('list-service:table.columns.status')}
                   </th>
-                  <th className="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="w-28 px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     {t('common:actions.actions')}
                   </th>
                 </tr>
@@ -459,8 +464,16 @@ export const ServicesList: React.FC = () => {
                         {service.status}
                       </span>
                     </td>
-                    <td className="w-20 px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center justify-center">
+                    <td className="w-28 px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => setSelectedQrService(service)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:text-emerald-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300 dark:focus:ring-offset-gray-800"
+                          title="Ver código QR"
+                          aria-label="Ver código QR"
+                        >
+                          <QrCodeIcon size={18} />
+                        </button>
                         <button
                           onClick={() => navigate(`/services/edit/${service.id}`)}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-indigo-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-800"
@@ -548,6 +561,14 @@ export const ServicesList: React.FC = () => {
           </div>
         )}
       </Card>
+      {selectedQrService && (
+        <ServiceQrModal
+          isOpen={Boolean(selectedQrService)}
+          onClose={() => setSelectedQrService(null)}
+          qrCode={selectedQrService.qrCode}
+          serviceCode={selectedQrService.code}
+        />
+      )}
     </div>
   )
 }

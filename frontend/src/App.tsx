@@ -11,12 +11,14 @@ import { Technicians } from './pages/catalogs/Technicians'
 import { Clients } from './pages/catalogs/Clients'
 import { TypeClientsCatalog } from './pages/catalogs/TypeClients'
 import { DocumentTypesCatalog } from './pages/catalogs/DocumentTypes'
+import { ServiceEvidencePage } from './pages/services/ServiceEvidencePage'
 
 function App() {
   return (
     <>
       <BrowserRouter>
         <Routes>
+          <Route path="/evidencias/:qrCode" element={<ServiceEvidencePage />} />
           <Route path="/" element={<Layout />}>
             <Route path="services">
               <Route path="create" element={<CreateService />} />

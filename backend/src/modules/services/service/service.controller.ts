@@ -4,6 +4,17 @@ import { randomUUID } from 'crypto'
 import { CreateServicePayloadSchema } from './service.schema.js'
 import { prisma } from '../../../lib/prisma.js'
 import { ensureDefaultClientCatalogs } from '../../../lib/defaultCatalogs.js'
+import {
+    compressAndStoreEvidence,
+    deleteStoredEvidenceFile,
+    ensureServiceEvidenceFolder,
+    EvidenceValidationError,
+    MAX_EVIDENCE_FILES_PER_UPLOAD,
+} from '../../../lib/evidenceStorage.js'
+import {
+    clearEvidenceForServiceIfExpired,
+    runEvidenceCleanup,
+} from '../../../lib/evidenceCleanup.js'
 
 const parseServiceRequestId = (rawId: string) => {
     const parsed = Number(rawId)
@@ -11,6 +22,30 @@ const parseServiceRequestId = (rawId: string) => {
         return null
     }
     return parsed
+}
+
+const parseQrCode = (value: string | undefined) => {
+    if (!value) return null
+    let next = value
+    try {
+        next = decodeURIComponent(value)
+    } catch {
+        // Conserva el valor original cuando no está URL encoded.
+    }
+
+    const parsed = next.trim()
+    return parsed.length > 0 ? parsed : null
+}
+
+const buildPublicFileUrl = (req: Request, filePath: string) => {
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        return filePath
+    }
+
+    const forwardedProtocol = req.header('x-forwarded-proto')?.split(',')[0]?.trim()
+    const protocol = forwardedProtocol || req.protocol
+
+    return `${protocol}://${req.get('host')}${filePath}`
 }
 
 export const createService = async (req: Request, res: Response) => {
@@ -169,6 +204,10 @@ export const createService = async (req: Request, res: Response) => {
                 clientId: resolvedClientId,
                 devicesCount: devices.length,
             }
+        })
+
+        await ensureServiceEvidenceFolder(created.id).catch((error) => {
+            console.error('No fue posible preparar carpeta de evidencias:', error)
         })
 
         return res.status(201).json(created)
@@ -537,6 +576,10 @@ export const updateService = async (req: Request, res: Response) => {
             }
         })
 
+        await ensureServiceEvidenceFolder(serviceRequestId).catch((error) => {
+            console.error('No fue posible preparar carpeta de evidencias:', error)
+        })
+
         return res.status(200).json(updated)
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -559,6 +602,210 @@ export const updateService = async (req: Request, res: Response) => {
 
         console.error('Error actualizando servicio:', error)
         return res.status(500).json({ error: 'Error interno del servidor' })
+    }
+}
+
+export const getServiceEvidenceByQr = async (req: Request, res: Response) => {
+    const qrCode = parseQrCode(req.params.qrCode)
+    if (!qrCode) {
+        return res.status(400).json({ error: 'El código QR es inválido.' })
+    }
+
+    try {
+        await runEvidenceCleanup()
+
+        const serviceRequest = await prisma.serviceRequest.findUnique({
+            where: { qrCode },
+            select: {
+                id: true,
+                code: true,
+                qrCode: true,
+                receptionDate: true,
+                observations: true,
+                status: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                branch: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                client: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                attachments: {
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                    select: {
+                        id: true,
+                        url: true,
+                        description: true,
+                        createdAt: true,
+                    },
+                },
+            },
+        })
+
+        if (!serviceRequest) {
+            return res.status(404).json({ error: 'Servicio no encontrado para este QR.' })
+        }
+
+        const expiration = await clearEvidenceForServiceIfExpired(serviceRequest.id)
+        const evidenceState = expiration.state
+
+        const attachments = expiration.cleaned
+            ? []
+            : serviceRequest.attachments.map((attachment) => ({
+                  id: attachment.id,
+                  url: buildPublicFileUrl(req, attachment.url),
+                  relativeUrl: attachment.url,
+                  description: attachment.description,
+                  createdAt: attachment.createdAt,
+              }))
+
+        return res.status(200).json({
+            serviceRequest: {
+                id: serviceRequest.id,
+                code: serviceRequest.code,
+                qrCode: serviceRequest.qrCode,
+                receptionDate: serviceRequest.receptionDate,
+                observations: serviceRequest.observations,
+                status: serviceRequest.status,
+                branch: serviceRequest.branch,
+                client: serviceRequest.client,
+            },
+            evidence: {
+                attachments,
+            },
+            upload: {
+                enabled: !evidenceState.expired,
+                maxFilesPerUpload: MAX_EVIDENCE_FILES_PER_UPLOAD,
+                fieldName: 'images',
+            },
+            cleanupPolicy: {
+                retentionDays: evidenceState.retentionDays,
+                terminalAt: evidenceState.terminalAt?.toISOString() ?? null,
+                expiresAt: evidenceState.expiresAt?.toISOString() ?? null,
+                expired: evidenceState.expired,
+            },
+        })
+    } catch (error) {
+        console.error('Error obteniendo evidencias por QR:', error)
+        return res.status(500).json({
+            error: 'No fue posible obtener las evidencias del servicio.',
+        })
+    }
+}
+
+export const uploadServiceEvidenceByQr = async (req: Request, res: Response) => {
+    const qrCode = parseQrCode(req.params.qrCode)
+    if (!qrCode) {
+        return res.status(400).json({ error: 'El código QR es inválido.' })
+    }
+
+    const files = (req.files as Express.Multer.File[] | undefined) ?? []
+    if (files.length === 0) {
+        return res.status(400).json({
+            error: 'Debes adjuntar al menos una imagen.',
+        })
+    }
+
+    try {
+        await runEvidenceCleanup()
+
+        const serviceRequest = await prisma.serviceRequest.findUnique({
+            where: { qrCode },
+            select: {
+                id: true,
+                code: true,
+                qrCode: true,
+            },
+        })
+
+        if (!serviceRequest) {
+            return res.status(404).json({ error: 'Servicio no encontrado para este QR.' })
+        }
+
+        const expiration = await clearEvidenceForServiceIfExpired(serviceRequest.id)
+        if (expiration.state.expired) {
+            return res.status(410).json({
+                error: 'Las evidencias de este servicio ya expiraron y fueron eliminadas.',
+                cleanupPolicy: {
+                    retentionDays: expiration.state.retentionDays,
+                    terminalAt: expiration.state.terminalAt?.toISOString() ?? null,
+                    expiresAt: expiration.state.expiresAt?.toISOString() ?? null,
+                    expired: expiration.state.expired,
+                },
+            })
+        }
+
+        const createdAttachments = []
+
+        for (const file of files) {
+            let stored: Awaited<ReturnType<typeof compressAndStoreEvidence>> | null = null
+            try {
+                stored = await compressAndStoreEvidence(serviceRequest.id, file)
+
+                const createdAttachment = await prisma.attachment.create({
+                    data: {
+                        serviceRequestId: serviceRequest.id,
+                        url: stored.publicPath,
+                        description: file.originalname.trim() || null,
+                    },
+                    select: {
+                        id: true,
+                        url: true,
+                        description: true,
+                        createdAt: true,
+                    },
+                })
+
+                createdAttachments.push({
+                    id: createdAttachment.id,
+                    url: buildPublicFileUrl(req, createdAttachment.url),
+                    relativeUrl: createdAttachment.url,
+                    description: createdAttachment.description,
+                    createdAt: createdAttachment.createdAt,
+                    originalBytes: stored.originalBytes,
+                    compressedBytes: stored.compressedBytes,
+                })
+            } catch (error) {
+                if (stored) {
+                    await deleteStoredEvidenceFile(stored.absolutePath).catch(() => undefined)
+                }
+                throw error
+            }
+        }
+
+        return res.status(201).json({
+            serviceRequest: {
+                id: serviceRequest.id,
+                code: serviceRequest.code,
+                qrCode: serviceRequest.qrCode,
+            },
+            uploadedCount: createdAttachments.length,
+            attachments: createdAttachments,
+        })
+    } catch (error) {
+        if (error instanceof EvidenceValidationError) {
+            return res.status(400).json({
+                error: 'Archivo inválido',
+                message: error.message,
+            })
+        }
+
+        console.error('Error subiendo evidencias por QR:', error)
+        return res.status(500).json({
+            error: 'No fue posible guardar las evidencias.',
+        })
     }
 }
 
