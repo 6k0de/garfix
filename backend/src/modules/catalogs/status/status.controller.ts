@@ -1,9 +1,65 @@
-import { Request, Response } from 'express'
 import { Prisma } from '@prisma/client'
-import { statusSchema, updateStatusSchema } from './status.schema.js'
+import type { Request, Response } from 'express'
+import { ensureDefaultClientCatalogs } from '../../../lib/defaultCatalogs.js'
 import { prisma } from '../../../lib/prisma.js'
+import { resolveCompanyScope } from '../../../lib/companyScope.js'
+import { sendError } from '../../../lib/httpErrors.js'
+import { statusSchema, updateStatusSchema } from './status.schema.js'
+
+const DEFAULT_STATUS_COLOR_HEX = '#64748B'
+const BRANCH_SCOPE_REQUIRED_MESSAGE =
+  'Debes seleccionar una sucursal activa para administrar estatus.'
+
+const resolveStatusScope = async (req: Request, res: Response) => {
+  const scope = await resolveCompanyScope(req)
+  if (!scope) {
+    res.status(401).json({
+      error: 'No autorizado',
+      message: 'Debes iniciar sesión para administrar estatus.',
+    })
+    return null
+  }
+
+  if (!scope.branchId) {
+    res.status(400).json({
+      error: 'Sucursal requerida',
+      message: BRANCH_SCOPE_REQUIRED_MESSAGE,
+    })
+    return null
+  }
+
+  const ownedBranch = await prisma.branch.findFirst({
+    where: {
+      id: scope.branchId,
+      companyId: scope.companyId,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!ownedBranch) {
+    res.status(403).json({
+      error: 'Acceso denegado',
+      message: 'La sucursal activa no pertenece a tu empresa.',
+    })
+    return null
+  }
+
+  await ensureDefaultClientCatalogs({
+    companyId: scope.companyId,
+    branchId: scope.branchId,
+  })
+
+  return scope
+}
 
 export const createStatus = async (req: Request, res: Response) => {
+  const scope = await resolveStatusScope(req, res)
+  if (!scope?.branchId) {
+    return
+  }
+
   const parsed = statusSchema.safeParse(req.body)
   if (!parsed.success) {
     return res
@@ -11,13 +67,15 @@ export const createStatus = async (req: Request, res: Response) => {
       .json({ error: 'Datos invalidos', details: parsed.error.issues })
   }
 
-  const { name, description } = parsed.data
+  const { name, description, colorHex } = parsed.data
 
   try {
     const status = await prisma.status.create({
       data: {
         name,
-        description: description ?? null,
+        description: description?.trim() || null,
+        colorHex: colorHex ?? DEFAULT_STATUS_COLOR_HEX,
+        branchId: scope.branchId,
       },
       select: {
         id: true,
@@ -30,8 +88,7 @@ export const createStatus = async (req: Request, res: Response) => {
       if (err.code === 'P2002') {
         return res.status(409).json({
           error: 'Conflicto',
-          message: 'Ya existe un estatus con ese nombre.',
-          meta: err.meta,
+          message: 'Ya existe un estatus con ese nombre en la sucursal activa.',
         })
       }
     }
@@ -41,9 +98,17 @@ export const createStatus = async (req: Request, res: Response) => {
   }
 }
 
-export const getAllStatus = async (_: Request, res: Response) => {
+export const getAllStatus = async (req: Request, res: Response) => {
+  const scope = await resolveStatusScope(req, res)
+  if (!scope?.branchId) {
+    return
+  }
+
   try {
     const statuses = await prisma.status.findMany({
+      where: {
+        branchId: scope.branchId,
+      },
       orderBy: {
         name: 'asc',
       },
@@ -51,6 +116,7 @@ export const getAllStatus = async (_: Request, res: Response) => {
         id: true,
         name: true,
         description: true,
+        colorHex: true,
         _count: {
           select: {
             histories: true,
@@ -64,20 +130,22 @@ export const getAllStatus = async (_: Request, res: Response) => {
       id: status.id,
       name: status.name,
       description: status.description ?? '',
+      colorHex: status.colorHex ?? DEFAULT_STATUS_COLOR_HEX,
       usedIn: (status._count.histories ?? 0) + (status._count.servicesRequests ?? 0),
     }))
 
     return res.status(200).json(result)
   } catch (error) {
-    console.error('Error obteniendo estatus:', error)
-    return res.status(500).json({
-      error: 'Error al obtener estatus',
-      details: error instanceof Error ? error.message : error,
-    })
+    return sendError(res, error, 'No fue posible obtener los estatus.')
   }
 }
 
 export const updateStatus = async (req: Request, res: Response) => {
+  const scope = await resolveStatusScope(req, res)
+  if (!scope?.branchId) {
+    return
+  }
+
   const parsed = updateStatusSchema.safeParse(req.body)
   if (!parsed.success) {
     return res
@@ -88,9 +156,41 @@ export const updateStatus = async (req: Request, res: Response) => {
   const { id, ...data } = parsed.data
 
   try {
+    const ownedStatus = await prisma.status.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedStatus) {
+      return res.status(404).json({ error: 'Estatus no encontrado' })
+    }
+
+    const updateData: {
+      name?: string
+      description?: string | null
+      colorHex?: string
+    } = {}
+
+    if (typeof data.name === 'string') {
+      updateData.name = data.name
+    }
+
+    if (typeof data.description === 'string') {
+      updateData.description = data.description.trim() || null
+    }
+
+    if (typeof data.colorHex === 'string') {
+      updateData.colorHex = data.colorHex
+    }
+
     await prisma.status.update({
       where: { id },
-      data,
+      data: updateData,
     })
 
     return res.status(200).json()
@@ -99,8 +199,7 @@ export const updateStatus = async (req: Request, res: Response) => {
       if (err.code === 'P2002') {
         return res.status(409).json({
           error: 'Conflicto',
-          message: 'Ya existe un estatus con ese nombre.',
-          meta: err.meta,
+          message: 'Ya existe un estatus con ese nombre en la sucursal activa.',
         })
       }
       if (err.code === 'P2025') {
@@ -114,12 +213,31 @@ export const updateStatus = async (req: Request, res: Response) => {
 }
 
 export const deleteStatus = async (req: Request, res: Response) => {
+  const scope = await resolveStatusScope(req, res)
+  if (!scope?.branchId) {
+    return
+  }
+
   const { id } = req.params
   if (!id) {
     return res.status(400).json({ error: 'El id del estatus es requerido' })
   }
 
   try {
+    const ownedStatus = await prisma.status.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedStatus) {
+      return res.status(404).json({ error: 'Estatus no encontrado' })
+    }
+
     await prisma.status.delete({
       where: { id },
     })

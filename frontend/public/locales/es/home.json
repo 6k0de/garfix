@@ -1,0 +1,54 @@
+{
+  "greeting": "Hola, {{name}}",
+  "greetingFallback": "Hola",
+  "subtitle": "Este es el resumen de {{branch}}.",
+  "subtitleNoBranch": "Este es el resumen de tu negocio.",
+  "refresh": "Actualizar",
+  "newService": "Nuevo servicio",
+  "viewAll": "Ver todo",
+  "loadError": "No fue posible cargar el resumen del negocio.",
+  "kpis": {
+    "requests": "Órdenes de servicio",
+    "requestsHint": "{{count}} este mes",
+    "devices": "Equipos atendidos",
+    "devicesHint": "En el taller",
+    "collected": "Ingresos cobrados",
+    "collectedHint": "{{amount}} este mes",
+    "pending": "Pendiente por cobrar",
+    "pendingHint": "De {{quoted}} cotizado"
+  },
+  "secondary": {
+    "quoted": "Total cotizado",
+    "clients": "Clientes registrados",
+    "ticket": "Ticket promedio"
+  },
+  "status": {
+    "title": "Estado de las órdenes",
+    "subtitle": "Distribución por estatus",
+    "empty": "Aún no hay órdenes para mostrar."
+  },
+  "recent": {
+    "title": "Órdenes recientes",
+    "subtitle": "Últimas solicitudes registradas",
+    "devices": "{{count}} equipo",
+    "devices_other": "{{count}} equipos",
+    "empty": "Todavía no has registrado ninguna orden."
+  },
+  "trend": {
+    "title": "Órdenes por mes",
+    "subtitle": "Últimos 6 meses",
+    "empty": "Sin actividad reciente."
+  },
+  "technicians": {
+    "title": "Técnicos destacados",
+    "subtitle": "Por equipos atendidos",
+    "devices": "{{count}} equipo",
+    "devices_other": "{{count}} equipos",
+    "empty": "Aún no hay actividad de técnicos."
+  },
+  "emptyState": {
+    "title": "Tu negocio aún no tiene movimientos",
+    "description": "Registra tu primera orden de servicio para empezar a ver aquí tus ventas, arreglos y estadísticas.",
+    "cta": "Crear primera orden"
+  }
+}

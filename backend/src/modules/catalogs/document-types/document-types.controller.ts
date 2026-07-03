@@ -5,6 +5,50 @@ import {
   documentTypeSchema,
   updateDocumentTypeSchema,
 } from './document-type.schema.js'
+import { resolveCompanyScope } from '../../../lib/companyScope.js'
+import { sendError } from '../../../lib/httpErrors.js'
+
+const BRANCH_SCOPE_REQUIRED_MESSAGE =
+  'Debes seleccionar una sucursal activa para administrar tipos de documento.'
+
+const resolveDocumentTypeScope = async (req: Request, res: Response) => {
+  const scope = await resolveCompanyScope(req)
+  if (!scope) {
+    res.status(401).json({
+      error: 'No autorizado',
+      message: 'Debes iniciar sesión para administrar tipos de documento.',
+    })
+    return null
+  }
+
+  if (!scope.branchId) {
+    res.status(400).json({
+      error: 'Sucursal requerida',
+      message: BRANCH_SCOPE_REQUIRED_MESSAGE,
+    })
+    return null
+  }
+
+  const ownedBranch = await prisma.branch.findFirst({
+    where: {
+      id: scope.branchId,
+      companyId: scope.companyId,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!ownedBranch) {
+    res.status(403).json({
+      error: 'Acceso denegado',
+      message: 'La sucursal activa no pertenece a tu empresa.',
+    })
+    return null
+  }
+
+  return scope
+}
 
 export const createDocumentType = async (req: Request, res: Response) => {
   const parsed = documentTypeSchema.safeParse(req.body)
@@ -17,10 +61,16 @@ export const createDocumentType = async (req: Request, res: Response) => {
   const { name, description } = parsed.data
 
   try {
+    const scope = await resolveDocumentTypeScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
     const documentType = await prisma.documentType.create({
       data: {
         name,
-        description: description ?? null,
+        description: description?.trim() || null,
+        branchId: scope.branchId,
       },
       select: {
         id: true,
@@ -34,7 +84,6 @@ export const createDocumentType = async (req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe un tipo de documento con ese nombre.',
-          meta: err.meta,
         })
       }
     }
@@ -44,9 +93,20 @@ export const createDocumentType = async (req: Request, res: Response) => {
   }
 }
 
-export const getAllDocumentTypes = async (_: Request, res: Response) => {
+export const getAllDocumentTypes = async (req: Request, res: Response) => {
   try {
+    const scope = await resolveDocumentTypeScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
     const documentTypes = await prisma.documentType.findMany({
+      where: {
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
       orderBy: {
         name: 'asc',
       },
@@ -71,11 +131,7 @@ export const getAllDocumentTypes = async (_: Request, res: Response) => {
 
     return res.status(200).json(result)
   } catch (error) {
-    console.error('Error obteniendo tipos de documento:', error)
-    return res.status(500).json({
-      error: 'Error al obtener tipos de documento',
-      details: error instanceof Error ? error.message : error,
-    })
+    return sendError(res, error, 'No fue posible obtener los tipos de documento.')
   }
 }
 
@@ -89,10 +145,44 @@ export const updateDocumentType = async (req: Request, res: Response) => {
 
   const { id, ...data } = parsed.data
 
+  if (!id) {
+    return res.status(400).json({ error: 'El id del tipo de documento es requerido' })
+  }
+
   try {
+    const scope = await resolveDocumentTypeScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
+    const ownedDocumentType = await prisma.documentType.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedDocumentType) {
+      return res.status(404).json({ error: 'Tipo de documento no encontrado' })
+    }
+
+    const updateData: Prisma.DocumentTypeUpdateInput = {}
+    if (typeof data.name === 'string') {
+      updateData.name = data.name
+    }
+    if (typeof data.description === 'string') {
+      updateData.description = data.description.trim() || null
+    }
+
     await prisma.documentType.update({
       where: { id },
-      data,
+      data: updateData,
     })
 
     return res.status(200).json()
@@ -102,7 +192,6 @@ export const updateDocumentType = async (req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe un tipo de documento con ese nombre.',
-          meta: err.meta,
         })
       }
       if (err.code === 'P2025') {
@@ -122,6 +211,28 @@ export const deleteDocumentType = async (req: Request, res: Response) => {
   }
 
   try {
+    const scope = await resolveDocumentTypeScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
+    const ownedDocumentType = await prisma.documentType.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedDocumentType) {
+      return res.status(404).json({ error: 'Tipo de documento no encontrado' })
+    }
+
     await prisma.documentType.delete({
       where: { id },
     })

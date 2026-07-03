@@ -1,10 +1,17 @@
 import { z } from 'zod'
 
+const hexColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#[0-9A-Fa-f]{6}$/, 'colorHex must be a valid #RRGGBB value')
+  .transform((value) => value.toUpperCase())
+
 export const statusSchema = z
   .object({
     id: z.string().optional(),
     name: z.string().trim().min(1, 'name is required'),
     description: z.string().trim().optional(),
+    colorHex: hexColorSchema.optional(),
   })
   .strict()
 

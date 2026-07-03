@@ -1,0 +1,54 @@
+{
+  "greeting": "Hi, {{name}}",
+  "greetingFallback": "Hi",
+  "subtitle": "Here's the summary for {{branch}}.",
+  "subtitleNoBranch": "Here's your business summary.",
+  "refresh": "Refresh",
+  "newService": "New service",
+  "viewAll": "View all",
+  "loadError": "We couldn't load the business summary.",
+  "kpis": {
+    "requests": "Service orders",
+    "requestsHint": "{{count}} this month",
+    "devices": "Devices handled",
+    "devicesHint": "In the workshop",
+    "collected": "Revenue collected",
+    "collectedHint": "{{amount}} this month",
+    "pending": "Pending to collect",
+    "pendingHint": "Out of {{quoted}} quoted"
+  },
+  "secondary": {
+    "quoted": "Total quoted",
+    "clients": "Registered clients",
+    "ticket": "Average ticket"
+  },
+  "status": {
+    "title": "Order status",
+    "subtitle": "Distribution by status",
+    "empty": "There are no orders to show yet."
+  },
+  "recent": {
+    "title": "Recent orders",
+    "subtitle": "Latest registered requests",
+    "devices": "{{count}} device",
+    "devices_other": "{{count}} devices",
+    "empty": "You haven't registered any orders yet."
+  },
+  "trend": {
+    "title": "Orders per month",
+    "subtitle": "Last 6 months",
+    "empty": "No recent activity."
+  },
+  "technicians": {
+    "title": "Top technicians",
+    "subtitle": "By devices handled",
+    "devices": "{{count}} device",
+    "devices_other": "{{count}} devices",
+    "empty": "No technician activity yet."
+  },
+  "emptyState": {
+    "title": "Your business has no activity yet",
+    "description": "Register your first service order to start seeing your sales, repairs and stats here.",
+    "cta": "Create first order"
+  }
+}

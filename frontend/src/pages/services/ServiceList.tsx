@@ -15,21 +15,31 @@ import {
   FilterIcon,
   Pencil as EditIcon,
   PlusIcon,
+  Printer as PrinterIcon,
   QrCodeIcon,
   SearchIcon,
 } from 'lucide-react'
 import type React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { getAllServices } from '@/services/service/service.api'
+import { getAllServices, getServiceTicket } from '@/services/service/service.api'
 import type { ServiceListRecord } from './service.types'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
+import {
+  generateServiceTicketPdfBlob,
+  preloadTicketPdfLibs,
+} from '@/lib/serviceTicket'
 import { ServiceQrModal } from '@/components/services/ServiceQrModal'
+import { ServiceActionModal } from './ServiceActionModal'
+import { getStatusTagStyle } from '@/lib/color'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 
 export const ServicesList: React.FC = () => {
   const { t } = useTranslation(['common', 'list-service'])
   const navigate = useNavigate()
+  const activeBranchId = useActiveBranchId()
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [services, setServices] = useState<ServiceListRecord[]>([])
@@ -43,23 +53,71 @@ export const ServicesList: React.FC = () => {
   const [selectedQrService, setSelectedQrService] = useState<ServiceListRecord | null>(
     null
   )
+  const [selectedEditService, setSelectedEditService] = useState<ServiceListRecord | null>(
+    null
+  )
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const [printingId, setPrintingId] = useState<number | null>(null)
+
+  // Genera/imprime el ticket PDF del servicio directo desde la tabla, sin abrir
+  // el modal del QR (útil si al crear no dio tiempo de imprimirlo).
+  const handlePrintTicket = async (serviceId: number) => {
+    if (printingId) return
+
+    // Loading dentro del sistema (ícono pulsando + toast). Solo cuando el PDF ya está
+    // generado se abre la ventana con el PDF (sin ventana en blanco ni descarga).
+    setPrintingId(serviceId)
+    const toastId = toast.loading(t('services:qr-modal.generatingPdf'))
+    try {
+      const ticket = await getServiceTicket(serviceId)
+      const blob = await generateServiceTicketPdfBlob(ticket)
+      toast.dismiss(toastId)
+
+      const pdfWindow = window.open(URL.createObjectURL(blob), '_blank')
+      if (!pdfWindow) toast.error(t('services:qr-modal.popupBlocked'))
+    } catch (error) {
+      console.error(error)
+      toast.error(getApiErrorMessage(error, t('services:qr-modal.pdfError')), {
+        id: toastId,
+      })
+    } finally {
+      setPrintingId(null)
+    }
+  }
+
+  const loadServices = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getAllServices()
+      setServices(data)
+    } catch (error) {
+      console.error(error)
+      toast.error(getApiErrorMessage(error, 'No fue posible cargar la lista de servicios'))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    const loadServices = async () => {
-      try {
-        const data = await getAllServices()
-        setServices(data)
-      } catch (error) {
-        console.error(error)
-        toast.error('No fue posible cargar la lista de servicios')
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    setCurrentPage(1)
+    setSelectedQrService(null)
+    setSelectedEditService(null)
+    setFilters({
+      status: '',
+      branch: '',
+      technician: '',
+      dateFrom: '',
+      dateTo: '',
+    })
+    if (!activeBranchId) return
+    void loadServices()
+  }, [activeBranchId, loadServices])
 
-    loadServices()
+  // Precargamos las librerías de PDF para que imprimir desde la tabla sea rápido y la
+  // nueva ventana del PDF se abra sin bloqueo del navegador.
+  useEffect(() => {
+    preloadTicketPdfLibs()
   }, [])
 
   const statusOptions = useMemo(
@@ -153,28 +211,6 @@ export const ServicesList: React.FC = () => {
       dateFrom: '',
       dateTo: '',
     })
-  }
-
-  const getStatusClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-      case 'en diagnóstico':
-      case 'en proceso':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-      case 'en reparación':
-        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400'
-      case 'esperando repuesto':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
-      case 'listo para entrega':
-      case 'completado':
-      case 'entregado':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-      case 'cancelado':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-    }
   }
 
   return (
@@ -403,7 +439,7 @@ export const ServicesList: React.FC = () => {
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
+              <thead className="bg-gray-50 dark:bg-gray-900/60">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     {t('list-service:table.columns.code')}
@@ -457,9 +493,8 @@ export const ServicesList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
-                          service.status
-                        )}`}
+                        className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                        style={getStatusTagStyle(service.statusColor)}
                       >
                         {service.status}
                       </span>
@@ -475,7 +510,19 @@ export const ServicesList: React.FC = () => {
                           <QrCodeIcon size={18} />
                         </button>
                         <button
-                          onClick={() => navigate(`/services/edit/${service.id}`)}
+                          onClick={() => handlePrintTicket(service.id)}
+                          disabled={printingId === service.id}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-teal-600 hover:bg-teal-50 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 dark:text-teal-400 dark:hover:bg-teal-900/30 dark:hover:text-teal-300 dark:focus:ring-offset-gray-800"
+                          title={t('services:qr-modal.generatePdf')}
+                          aria-label={t('services:qr-modal.generatePdf')}
+                        >
+                          <PrinterIcon
+                            size={18}
+                            className={printingId === service.id ? 'animate-pulse' : ''}
+                          />
+                        </button>
+                        <button
+                          onClick={() => setSelectedEditService(service)}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-indigo-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-800"
                           title={t('common:actions.edit')}
                           aria-label={t('common:actions.edit')}
@@ -567,6 +614,20 @@ export const ServicesList: React.FC = () => {
           onClose={() => setSelectedQrService(null)}
           qrCode={selectedQrService.qrCode}
           serviceCode={selectedQrService.code}
+          serviceRequestId={selectedQrService.id}
+        />
+      )}
+      {selectedEditService && (
+        <ServiceActionModal
+          serviceId={selectedEditService.id}
+          serviceCode={selectedEditService.code}
+          qrCode={selectedEditService.qrCode}
+          isOpen={Boolean(selectedEditService)}
+          onClose={() => setSelectedEditService(null)}
+          onSaved={() => {
+            setSelectedEditService(null)
+            void loadServices()
+          }}
         />
       )}
     </div>

@@ -60,9 +60,15 @@ export const SumaryStep: React.FC<SummaryStepProps> = ({
   const clientInfo = formData.client ?? formData.newClient
   const isExistingClient = Boolean(formData.clientId)
 
-  const totalCost = formData.devices
-    .reduce((acc, device) => acc + (Number(device.cost) || 0), 0)
-    .toFixed(2)
+  const totalCostNum = formData.devices.reduce(
+    (acc, device) => acc + (Number(device.cost) || 0),
+    0
+  )
+  const totalAdvanceNum = formData.devices.reduce(
+    (acc, device) => acc + (Number(device.advance) || 0),
+    0
+  )
+  const remainingNum = Math.max(totalCostNum - totalAdvanceNum, 0)
 
   return (
     <div className="animate-fadeIn">
@@ -280,13 +286,29 @@ export const SumaryStep: React.FC<SummaryStepProps> = ({
                 </span>
               </div>
             ))}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-900 dark:text-white">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">
                   {t('services:summary.total')}
                 </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  ${totalCostNum.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">
+                  {t('services:summary.advanceTotal')}
+                </span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  −${totalAdvanceNum.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-2">
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {t('services:summary.totalPending')}
+                </span>
                 <span className="font-bold text-gray-900 dark:text-white">
-                  ${totalCost}
+                  ${remainingNum.toFixed(2)}
                 </span>
               </div>
             </div>

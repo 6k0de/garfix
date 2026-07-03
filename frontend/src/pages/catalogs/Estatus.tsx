@@ -13,17 +13,24 @@ import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Trans, useTranslation } from 'react-i18next'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useStatusStore } from '@/utils/store/StatusStore.tsx'
 import {
   createStatus,
   deleteStatus,
   updateStatus,
 } from '@/services/catalogs/status.api.ts'
+import {
+  getStatusTagStyle,
+  normalizeHexColor,
+} from '@/lib/color'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 
 export interface StatusRecord {
   id?: string
   name: string
   description: string
+  colorHex: string
   usedIn?: number
 }
 
@@ -31,17 +38,22 @@ export interface StatusPayload {
   id?: string
   name: string
   description?: string
+  colorHex: string
 }
+
+const STATUS_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/
 
 const initialValues: StatusPayload = {
   id: '',
   name: '',
   description: '',
+  colorHex: '#64748B',
 }
 
 export const StatusCatalog: React.FC = () => {
   const { t } = useTranslation(['common', 'status'])
   const { statuses, fetchStatuses } = useStatusStore()
+  const activeBranchId = useActiveBranchId()
 
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -57,6 +69,7 @@ export const StatusCatalog: React.FC = () => {
         id: currentStatus.id,
         name: currentStatus.name,
         description: currentStatus.description || '',
+        colorHex: currentStatus.colorHex || '#64748B',
       })
       return
     }
@@ -65,8 +78,13 @@ export const StatusCatalog: React.FC = () => {
   }, [currentStatus])
 
   useEffect(() => {
-    fetchStatuses()
-  }, [fetchStatuses])
+    setCurrentPage(1)
+    setIsModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setCurrentStatus(null)
+    if (!activeBranchId) return
+    void fetchStatuses()
+  }, [activeBranchId, fetchStatuses])
 
   const itemsPerPage = 5
   const totalPages = Math.max(1, Math.ceil(statuses.length / itemsPerPage))
@@ -132,6 +150,10 @@ export const StatusCatalog: React.FC = () => {
       errors.name = t('status:formNewStatus.createStatus')
     }
 
+    if (!STATUS_COLOR_REGEX.test(formValues.colorHex || '')) {
+      errors.colorHex = t('status:formNewStatus.invalidColor')
+    }
+
     return errors
   }
 
@@ -164,7 +186,7 @@ export const StatusCatalog: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error('No fue posible guardar el estatus')
+      toast.error(getApiErrorMessage(error, 'No fue posible guardar el estatus'))
     } finally {
       setIsSubmitting(false)
     }
@@ -184,7 +206,7 @@ export const StatusCatalog: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error(t('status:formDelete.error'))
+      toast.error(getApiErrorMessage(error, t('status:formDelete.error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -203,6 +225,13 @@ export const StatusCatalog: React.FC = () => {
       label: t('status:formNewStatus.descriptionInput'),
       type: 'textarea' as const,
       placeholder: t('status:formPlaceholder.descriptionInput'),
+    },
+    {
+      name: 'colorHex',
+      label: t('status:formNewStatus.colorInput'),
+      type: 'color' as const,
+      required: true,
+      placeholder: '#64748B',
     },
   ]
 
@@ -232,13 +261,16 @@ export const StatusCatalog: React.FC = () => {
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/60">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('status:table.columns.name')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('status:table.columns.description')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('status:table.columns.color')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('status:table.columns.usedOn')}
@@ -255,7 +287,12 @@ export const StatusCatalog: React.FC = () => {
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {status.name}
+                    <span
+                      className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                      style={getStatusTagStyle(status.colorHex)}
+                    >
+                      {status.name}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {status.description || (
@@ -263,6 +300,17 @@ export const StatusCatalog: React.FC = () => {
                         {t('status:table.noDescriptions')}
                       </span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <div className="inline-flex items-center gap-2">
+                      <span
+                        className="h-4 w-4 rounded-full border border-gray-300 dark:border-gray-600"
+                        style={{ backgroundColor: normalizeHexColor(status.colorHex) }}
+                      />
+                      <span className="font-mono text-xs uppercase">
+                        {normalizeHexColor(status.colorHex)}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -304,7 +352,7 @@ export const StatusCatalog: React.FC = () => {
               {statuses.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     {t('status:table.noData')}

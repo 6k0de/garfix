@@ -2,6 +2,11 @@ import { Request, Response } from 'express'
 import { Prisma } from '@prisma/client'
 import { locationSchema, updateLocationSchema } from './location.schema.js'
 import { prisma } from '../../../lib/prisma.js'
+import { resolveCompanyScope } from '../../../lib/companyScope.js'
+import { sendError } from '../../../lib/httpErrors.js'
+
+const BRANCH_SCOPE_MESSAGE =
+  'Solo puedes acceder a información de la sucursal activa.'
 
 export const createLocation = async (req: Request, res: Response) => {
   const parsed = locationSchema.safeParse(req.body)
@@ -14,6 +19,45 @@ export const createLocation = async (req: Request, res: Response) => {
   const { name, branchId, instructions } = parsed.data
 
   try {
+    const scope = await resolveCompanyScope(req)
+    if (!scope) {
+      return res.status(401).json({
+        error: 'No autorizado',
+        message: 'Debes iniciar sesión para crear ubicaciones.',
+      })
+    }
+
+    if (scope.isTechnician && !scope.branchId) {
+      return res.status(403).json({
+        error: 'Acceso denegado',
+        message: BRANCH_SCOPE_MESSAGE,
+      })
+    }
+
+    if (scope.branchId && branchId !== scope.branchId) {
+      return res.status(403).json({
+        error: 'Acceso denegado',
+        message: BRANCH_SCOPE_MESSAGE,
+      })
+    }
+
+    const ownedBranch = await prisma.branch.findFirst({
+      where: {
+        id: branchId,
+        companyId: scope.companyId,
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedBranch) {
+      return res.status(400).json({
+        error: 'Relación inválida',
+        message: 'La sucursal especificada no existe o no pertenece a tu empresa.',
+      })
+    }
+
     const location = await prisma.location.create({
       data: {
         name,
@@ -32,14 +76,12 @@ export const createLocation = async (req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe una ubicación con ese nombre.',
-          meta: err.meta,
         })
       }
       if (err.code === 'P2003') {
         return res.status(400).json({
           error: 'Relación inválida',
           message: 'La sucursal especificada no existe.',
-          meta: err.meta,
         })
       }
     }
@@ -49,9 +91,27 @@ export const createLocation = async (req: Request, res: Response) => {
   }
 }
 
-export const getAllLocations = async (_: Request, res: Response) => {
+export const getAllLocations = async (req: Request, res: Response) => {
   try {
+    const scope = await resolveCompanyScope(req)
+    if (!scope) {
+      return res.status(401).json({
+        error: 'No autorizado',
+        message: 'Debes iniciar sesión para consultar ubicaciones.',
+      })
+    }
+
+    if (scope.isTechnician && !scope.branchId) {
+      return res.status(200).json([])
+    }
+
     const locations = await prisma.location.findMany({
+      where: {
+        branch: {
+          companyId: scope.companyId,
+          ...(scope.branchId ? { id: scope.branchId } : {}),
+        },
+      },
       orderBy: {
         name: 'asc',
       },
@@ -85,11 +145,7 @@ export const getAllLocations = async (_: Request, res: Response) => {
 
     return res.status(200).json(result)
   } catch (error) {
-    console.error('Error obteniendo ubicaciones:', error)
-    return res.status(500).json({
-      error: 'Error al obtener ubicaciones',
-      details: error instanceof Error ? error.message : error,
-    })
+    return sendError(res, error, 'No fue posible obtener las ubicaciones.')
   }
 }
 
@@ -108,6 +164,64 @@ export const updateLocation = async (req: Request, res: Response) => {
   }
 
   try {
+    const scope = await resolveCompanyScope(req)
+    if (!scope) {
+      return res.status(401).json({
+        error: 'No autorizado',
+        message: 'Debes iniciar sesión para actualizar ubicaciones.',
+      })
+    }
+
+    if (scope.isTechnician && !scope.branchId) {
+      return res.status(403).json({
+        error: 'Acceso denegado',
+        message: BRANCH_SCOPE_MESSAGE,
+      })
+    }
+
+    const ownedLocation = await prisma.location.findFirst({
+      where: {
+        id,
+        branch: {
+          companyId: scope.companyId,
+          ...(scope.branchId ? { id: scope.branchId } : {}),
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedLocation) {
+      return res.status(404).json({ error: 'Ubicación no encontrada' })
+    }
+
+    if (typeof data.branchId === 'string') {
+      if (scope.branchId && data.branchId !== scope.branchId) {
+        return res.status(403).json({
+          error: 'Acceso denegado',
+          message: BRANCH_SCOPE_MESSAGE,
+        })
+      }
+
+      const ownedBranch = await prisma.branch.findFirst({
+        where: {
+          id: data.branchId,
+          companyId: scope.companyId,
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      if (!ownedBranch) {
+        return res.status(400).json({
+          error: 'Relación inválida',
+          message: 'La sucursal especificada no existe o no pertenece a tu empresa.',
+        })
+      }
+    }
+
     await prisma.location.update({
       where: { id },
       data,
@@ -120,14 +234,12 @@ export const updateLocation = async (req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe una ubicación con ese nombre.',
-          meta: err.meta,
         })
       }
       if (err.code === 'P2003') {
         return res.status(400).json({
           error: 'Relación inválida',
           message: 'La sucursal especificada no existe.',
-          meta: err.meta,
         })
       }
       if (err.code === 'P2025') {
@@ -147,6 +259,38 @@ export const deleteLocation = async (req: Request, res: Response) => {
   }
 
   try {
+    const scope = await resolveCompanyScope(req)
+    if (!scope) {
+      return res.status(401).json({
+        error: 'No autorizado',
+        message: 'Debes iniciar sesión para eliminar ubicaciones.',
+      })
+    }
+
+    if (scope.isTechnician && !scope.branchId) {
+      return res.status(403).json({
+        error: 'Acceso denegado',
+        message: BRANCH_SCOPE_MESSAGE,
+      })
+    }
+
+    const ownedLocation = await prisma.location.findFirst({
+      where: {
+        id,
+        branch: {
+          companyId: scope.companyId,
+          ...(scope.branchId ? { id: scope.branchId } : {}),
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedLocation) {
+      return res.status(404).json({ error: 'Ubicación no encontrada' })
+    }
+
     await prisma.location.delete({
       where: { id },
     })

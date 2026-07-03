@@ -71,7 +71,8 @@
         "newServiceDetailInput": "Detailed problem description",
         "newSolutionDetailInput": "Write the possible solution (optional)",
         "newAssignedTechnicianInput": "Select technician",
-        "newAssignedLocationInput": "Select location"
+        "newAssignedLocationInput": "Select location",
+        "newUnlockCodeInput": "e.g. 1-2-3-6-9 or PIN"
       },
       "labelInput": {
         "newLabelTypeDevice": "Device type",
@@ -87,7 +88,18 @@
         "newAssignedTechnician": "Assigned technician",
         "newLocation": "Location",
         "newEstimateDate": "Estimated delivery date",
-        "newEstimateTime": "Estimated delivery time"
+        "newEstimateTime": "Estimated delivery time",
+        "newLabelUnlockType": "Unlock type",
+        "newLabelUnlockCode": "Unlock code / pattern"
+      },
+      "unlockOptions": {
+        "unspecified": "Unspecified",
+        "pattern": "Pattern",
+        "pin": "PIN",
+        "password": "Password",
+        "fingerprint": "Fingerprint",
+        "face": "Face",
+        "none": "No lock"
       }
     },
     "message": {
@@ -119,5 +131,162 @@
     "total": "Total",
     "advanceTotal": "Total deposit",
     "totalPending": "Pending balance"
+  },
+  "action-modal": {
+    "title": "Service {{code}}",
+    "loading": "Loading service...",
+    "loadError": "Could not load service information.",
+    "closeButton": "Close",
+    "saveButton": "Save changes",
+    "savingButton": "Saving...",
+    "performDeliveryButton": "Perform delivery",
+    "performingDeliveryButton": "Performing delivery...",
+    "clientUnavailable": "Client not available",
+    "qrLabel": "QR",
+    "tabs": {
+      "info": "Information",
+      "devices": "Devices",
+      "service": "Service",
+      "cancel": "Cancel service",
+      "evidence": "Evidence"
+    },
+    "labels": {
+      "clientInfo": "Client information",
+      "statusCard": "Status",
+      "reception": "Reception",
+      "budget": "Budget",
+      "registeredDevices": "Registered devices",
+      "problem": "Problem",
+      "finalStatus": "Final status"
+    },
+    "deviceSection": {
+      "description": "Edit service devices or add a new one.",
+      "addDevice": "Add device",
+      "deviceNumber": "Device #{{number}}",
+      "removeDevice": "Remove"
+    },
+    "infoSection": {
+      "deviceSummary": "{{type}} • Technician: {{technician}} • Location: {{location}}"
+    },
+    "evidenceSection": {
+      "description": "Use the QR code to capture or upload service evidence from any device.",
+      "showQr": "View QR code",
+      "openEvidence": "Open evidence"
+    },
+    "cancelSection": {
+      "autofill": "Use service totals",
+      "labels": {
+        "client": "Client",
+        "currentStatus": "Current status",
+        "total": "Total",
+        "totalPaid": "Total paid",
+        "debt": "Debt",
+        "amount": "Amount",
+        "cancelStatus": "Cancellation status",
+        "hasRefund": "Will there be a refund?",
+        "refundMethod": "Refund method",
+        "cashFromBox": "Is the cash from the cashbox?",
+        "bankAccount": "Bank account",
+        "bankFromBox": "Will it be from cashbox bank?",
+        "boxBank": "Cashbox bank",
+        "boxCash": "Cashbox",
+        "notes": "Notes"
+      },
+      "placeholders": {
+        "status": "Select status",
+        "hasRefund": "Select an option",
+        "refundMethod": "Select method",
+        "cashFromBox": "Select an option",
+        "bankAccount": "General account",
+        "bankFromBox": "Select an option",
+        "sourceBox": "Main cashbox",
+        "notes": "Additional cancellation detail (optional)"
+      },
+      "options": {
+        "yes": "Yes",
+        "no": "No",
+        "cash": "Cash",
+        "bank": "Bank"
+      },
+      "buttons": {
+        "cancelService": "Cancel service",
+        "cancelling": "Cancelling service..."
+      },
+      "validation": {
+        "statusRequired": "Select the cancellation status.",
+        "amountRequired": "Cancellation amount must be greater than 0.",
+        "hasRefundRequired": "Indicate whether there is a refund.",
+        "refundMethodRequired": "Select the refund method.",
+        "cashFromBoxRequired": "Indicate whether cash refund comes from cashbox.",
+        "bankAccountRequired": "Enter the refund bank account.",
+        "bankFromBoxRequired": "Indicate whether bank refund comes from cashbox.",
+        "sourceBoxRequired": "Enter the source cashbox or cashbox bank."
+      },
+      "toasts": {
+        "success": "Service cancelled and saved successfully.",
+        "error": "Could not cancel the service."
+      }
+    },
+    "closePicker": {
+      "title": "Select the status to close the service",
+      "description": "A final status was not detected automatically using configured names.",
+      "confirm": "Confirm delivery",
+      "cancel": "Cancel",
+      "statusPlaceholder": "Select status"
+    },
+    "toasts": {
+      "loadError": "Could not load service details.",
+      "deviceAdded": "Device added. Complete its information.",
+      "minimumOneDevice": "At least one device must remain in the service.",
+      "updated": "Service updated successfully.",
+      "updateError": "Could not update the service.",
+      "closed": "Service delivered and closed successfully.",
+      "closeError": "Could not close the service.",
+      "alreadyTerminal": "The service is already in a final status.",
+      "manualStatusRequired": "Select the final status manually to complete delivery."
+    },
+    "validation": {
+      "selectBranch": "Select a branch.",
+      "selectStatus": "Select a status.",
+      "receptionRequired": "Reception date is required.",
+      "atLeastOneDevice": "You must register at least one device.",
+      "deviceType": "Device {{number}}: select type.",
+      "deviceBrand": "Device {{number}}: brand is required.",
+      "deviceModel": "Device {{number}}: model is required.",
+      "deviceProblem": "Device {{number}}: problem detail is required.",
+      "deviceTechnician": "Device {{number}}: select an assigned technician.",
+      "deviceLocation": "Device {{number}}: select a location."
+    },
+    "placeholders": {
+      "deviceType": "Device type",
+      "technician": "Select technician",
+      "location": "Select location",
+      "branch": "Select branch",
+      "status": "Select status"
+    },
+    "empty": {
+      "na": "N/A",
+      "withoutType": "No type",
+      "withoutTechnician": "No technician",
+      "withoutLocation": "No location"
+    }
+  },
+  "qr-modal": {
+    "title": "Evidence QR",
+    "titleWithCode": "Evidence QR - {{code}}",
+    "description": "Scan this code to open the evidence page and upload photos.",
+    "generating": "Generating QR...",
+    "imageAlt": "Evidence QR code",
+    "generateError": "Could not generate the QR code.",
+    "copyLink": "Copy link",
+    "openPage": "Open page",
+    "close": "Close",
+    "copySuccess": "Link copied to clipboard.",
+    "copyError": "Could not copy the QR URL.",
+    "generatePdf": "Generate PDF",
+    "generatingPdf": "Generating PDF…",
+    "pdfError": "Could not generate the service PDF.",
+    "popupBlocked": "Allow pop-ups to generate the PDF.",
+    "pdfDownloaded": "PDF downloaded."
   }
 }

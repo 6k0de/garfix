@@ -1,9 +1,8 @@
-import type { Branch } from '@/pages/catalogs/Branches.tsx'
 import { create } from 'zustand'
-import { getAllBranches } from '@/services/catalogs/branch.api.ts'
+import { getAllBranches, type BranchItem } from '@/services/catalogs/branch.api.ts'
 
 interface BranchesState {
-  branches: Branch[]
+  branches: BranchItem[]
   fetchBranches: () => Promise<void>
 }
 

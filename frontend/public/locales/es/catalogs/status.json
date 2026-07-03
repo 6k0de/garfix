@@ -6,6 +6,7 @@
     "columns": {
       "name": "Nombre",
       "description": "Descripción",
+      "color": "Color",
       "usedOn": "Usado en"
     },
     "noDescriptions": "Sin descripción",
@@ -18,7 +19,9 @@
     "title": "Nuevo estatus",
     "nameInput": "Nombre",
     "descriptionInput": "Descripción",
+    "colorInput": "Color",
     "createStatus": " Ya existe un estado con este nombre",
+    "invalidColor": "Selecciona un color hexadecimal válido",
     "saveButton": "Guardar"
   },
   "formPlaceholder": {

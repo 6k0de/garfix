@@ -1,6 +1,13 @@
 import { Router } from 'express'
+import { authRequired, superAdminRequired } from '../lib/auth.js'
 // @ts-ignore
 import serviceRoute from '../modules/services/service/service.route.js'
+// @ts-ignore
+import authRoute from '../modules/auth/auth.route.js'
+// @ts-ignore
+import adminRoute from '../modules/admin/admin.route.js'
+// @ts-ignore
+import paymentRoute from '../modules/payments/payment.route.js'
 // @ts-ignore
 import branchRoute from '../modules/catalogs/branches/branch.route.js'
 // @ts-ignore
@@ -23,6 +30,8 @@ import typeClientsRoute from '../modules/catalogs/type-clients/type-clients.rout
 
 const routes = Router()
 
+routes.use('/auth', authRoute)
+routes.use('/payments', paymentRoute)
 routes.use('/services', serviceRoute)
 routes.use('/branches', branchRoute)
 routes.use('/roles', roleRoute)
@@ -33,5 +42,7 @@ routes.use('/clients', clientRoute)
 routes.use('/status', statusRoute)
 routes.use('/document-types', documentTypesRoute)
 routes.use('/type-clients', typeClientsRoute)
+routes.use('/superadmin', authRequired, superAdminRequired, adminRoute)
+routes.use('/admin', authRequired, superAdminRequired, adminRoute)
 
 export default routes

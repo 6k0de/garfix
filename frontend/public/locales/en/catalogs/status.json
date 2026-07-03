@@ -6,6 +6,7 @@
     "columns": {
       "name": "Name",
       "description": "Description",
+      "color": "Color",
       "usedOn": "Used in"
     },
     "noDescriptions": "No description",
@@ -18,7 +19,9 @@
     "title": "New status",
     "nameInput": "Name",
     "descriptionInput": "Description",
+    "colorInput": "Color",
     "createStatus": "There is already a status with this name",
+    "invalidColor": "Select a valid hexadecimal color",
     "saveButton": "Save"
   },
   "formPlaceholder": {

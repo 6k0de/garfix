@@ -1,125 +1,294 @@
 {
-    "title": "Nuevo servicio",
-    "editTitle": "Editar servicio",
-    "description": "Completa todos los datos necesarios para registrar un nuevo servicio",
-    "editDescription": "Actualiza los datos del servicio seleccionado",
-    "errorGeneral": "Por favor selecciona un cliente o crea uno nuevo",
-    "noData": "No se encontraron clientes",
-    "success": "¡Servicio creado exitosamente!",
-    "updateSuccess": "¡Servicio actualizado exitosamente!",
-    "qrCodeMessage": "El servicio ha sido registrado con el código",
-    "updateQrCodeMessage": "El servicio se actualizó con el código",
-    "finish": "Ver todos los servicios",
-    "updateError": "No fue posible actualizar el servicio",
-    "first-step": {
-        "title": "1.- Información del cliente",
-        "buttonSaveandUseNewUser": "Guardar y usar",
-        "buttonAddNewUser": "Registrar nuevo cliente",
-        "placeholder": {
-            "searchInput": "Buscar cliente por nombre, teléfono o correo electrónico",
-            "newNameInput": "Nombre completo",
-            "newEmailInput": "cliente@ejemplo.com",
-            "newAddressInput": "Dirección completa",
-            "newTypeClientInput": "Selecciona un tipo de cliente",
-            "newDocumentType": "Seleccionar tipo de documento"
-        },
-        "labelInput": {
-            "newLabelUserName": "Nombre completo",
-            "newLabelUserPhone": "Teléfono",
-            "newLabelUserEmail": "Correo electrónico",
-            "newLabelUserAddress": "Dirección",
-            "newLabelUserTypeClient": "Tipo de cliente",
-            "newLabelUserDocumentType": "Tipo de identificación"
-        },
-        "stepper": {
-            "one": "Cliente",
-            "two": "Dispositivo",
-            "three": "Detalle",
-            "four": "Confirmar"
-        },
-        "validations": {
-            "name": "El nombre es requerido",
-            "phone": "El teléfono es requerido",
-            "email": "El correo electrónico no es válido"
-        }
+  "title": "Nuevo servicio",
+  "editTitle": "Editar servicio",
+  "description": "Completa todos los datos necesarios para registrar un nuevo servicio",
+  "editDescription": "Actualiza los datos del servicio seleccionado",
+  "errorGeneral": "Por favor selecciona un cliente o crea uno nuevo",
+  "noData": "No se encontraron clientes",
+  "success": "¡Servicio creado exitosamente!",
+  "updateSuccess": "¡Servicio actualizado exitosamente!",
+  "qrCodeMessage": "El servicio ha sido registrado con el código",
+  "updateQrCodeMessage": "El servicio se actualizó con el código",
+  "finish": "Ver todos los servicios",
+  "updateError": "No fue posible actualizar el servicio",
+  "first-step": {
+    "title": "1.- Información del cliente",
+    "buttonSaveandUseNewUser": "Guardar y usar",
+    "buttonAddNewUser": "Registrar nuevo cliente",
+    "placeholder": {
+      "searchInput": "Buscar cliente por nombre, teléfono o correo electrónico",
+      "newNameInput": "Nombre completo",
+      "newEmailInput": "cliente@ejemplo.com",
+      "newAddressInput": "Dirección completa",
+      "newTypeClientInput": "Selecciona un tipo de cliente",
+      "newDocumentType": "Seleccionar tipo de documento"
     },
-    "second-step": {
-        "title": "2.- Información del equipo(s)",
-        "subtitle": "Dispositivos",
-        "buttonAddDevice": "Agregar dispositivo",
-        "buttonAddMoreDevice": "Agregar otro dispositivo",
-        "buttonDeleteDevice": "Eliminar dispositivo",
-        "newDevice": {
-            "title": "Nuevo Dispositivo",
-            "titleEdit": "Editar Dispositivo",
-            "validations": {
-                "typeDevice": "El tipo de dispositivo es requerido",
-                "brandDevice": "La marca es requerida",
-                "modelDevice": "El modelo es requerido",
-                "appearanceDevice": "El estado es requerido",
-                "detailDevice": "La descripción del problema es requerida",
-                "costRepair": "El costo de reparación es requerido",
-                "costRepairInvalid": "El costo de reparación debe ser un número"
-            },
-            "placeholder": {
-                "newTypeDeviceInput": "Seleccionar dispositivo",
-                "newBrandInput": "Samung",
-                "newModelInput": "S22 plus",
-                "newSerialNumberInput": "IMEI o número de serie",
-                "newColorInput": "Color del dispositivo",
-                "newAppearanceInput": "Seleccionar estado",
-                "newServiceDetailInput": "Descripción del problema",
-                "newSolutionDetailInput": "Escriba la posible solución(opcional)",
-                "newAssignedTechnicianInput": "Seleccionar técnico",
-                "newAssignedLocationInput": "Seleccionar ubicación"
-            },
-            "labelInput": {
-                "newLabelTypeDevice": "Tipo de dispositivo",
-                "newLabelBrand": "Marca",
-                "newLabelModel": "Modelo",
-                "newLabelSerialNumber": "IMEI / Número de serie",
-                "newLabelColor": "Color",
-                "newLabelAppearance": "Estado estético",
-                "newLabelServiceDetail": "Detalle del servicio(problema)",
-                "newLabelSolutionDetail": "Solución",
-                "newCostRepair": "Costo de reparación",
-                "newAdvance": "Anticipo",
-                "newAssignedTechnician": "Técnico asignado",
-                "newLocation": "Ubicación",
-                "newEstimateDate": "Fecha estimada de entrega",
-                "newEstimateTime": "Hora estimada de entrega"
-            }
-        },
-        "message": {
-            "noDevice": "Aún no has agregado ningún dispositivo"
-        }
+    "labelInput": {
+      "newLabelUserName": "Nombre completo",
+      "newLabelUserPhone": "Teléfono",
+      "newLabelUserEmail": "Correo electrónico",
+      "newLabelUserAddress": "Dirección",
+      "newLabelUserTypeClient": "Tipo de cliente",
+      "newLabelUserDocumentType": "Tipo de identificación"
     },
-    "third-step": {
-        "title": "Detalles del servicio",
-        "placeholder": {
-            "branchInput": "Selecciona la sucursal",
-            "statusInitialInput": "Selecciona el estatus inicial",
-            "observationsInput": "Observaciones generales sobre el servicio"
-        },
-        "labelInput": {
-            "dateReception": "Fecha de recepción",
-            "initialStatus": "Estatus",
-            "serviceCode": "Código de servicio",
-            "observations": "Observaciones"
-        }
+    "stepper": {
+      "one": "Cliente",
+      "two": "Dispositivo",
+      "three": "Detalle",
+      "four": "Confirmar"
     },
-    "summary": {
-        "title": "Resumen y confirmación",
-        "buttonFinish": "Crear servicio",
-        "saving": "Guardando...",
-        "subtitle1": "Información del cliente",
-        "tagExistingUser": "Cliente existente",
-        "tagNotExistingUser": "Cliente nuevo",
-        "subtitle2": "Detalles del servicio",
-        "subtitle3": "Dispositivos",
-        "subtitle4": "Resumen de costos",
-        "total": "Total",
-        "advanceTotal": "Anticipo total",
-        "totalPending": "Saldo pendiente"
+    "validations": {
+      "name": "El nombre es requerido",
+      "phone": "El teléfono es requerido",
+      "email": "El correo electrónico no es válido"
     }
+  },
+  "second-step": {
+    "title": "2.- Información del equipo(s)",
+    "subtitle": "Dispositivos",
+    "buttonAddDevice": "Agregar dispositivo",
+    "buttonAddMoreDevice": "Agregar otro dispositivo",
+    "buttonDeleteDevice": "Eliminar dispositivo",
+    "newDevice": {
+      "title": "Nuevo Dispositivo",
+      "titleEdit": "Editar Dispositivo",
+      "validations": {
+        "typeDevice": "El tipo de dispositivo es requerido",
+        "brandDevice": "La marca es requerida",
+        "modelDevice": "El modelo es requerido",
+        "appearanceDevice": "El estado es requerido",
+        "detailDevice": "La descripción del problema es requerida",
+        "costRepair": "El costo de reparación es requerido",
+        "costRepairInvalid": "El costo de reparación debe ser un número"
+      },
+      "placeholder": {
+        "newTypeDeviceInput": "Seleccionar dispositivo",
+        "newBrandInput": "Samung",
+        "newModelInput": "S22 plus",
+        "newSerialNumberInput": "IMEI o número de serie",
+        "newColorInput": "Color del dispositivo",
+        "newAppearanceInput": "Seleccionar estado",
+        "newServiceDetailInput": "Descripción del problema",
+        "newSolutionDetailInput": "Escriba la posible solución(opcional)",
+        "newAssignedTechnicianInput": "Seleccionar técnico",
+        "newAssignedLocationInput": "Seleccionar ubicación",
+        "newUnlockCodeInput": "Ej. 1-2-3-6-9 o PIN"
+      },
+      "labelInput": {
+        "newLabelTypeDevice": "Tipo de dispositivo",
+        "newLabelBrand": "Marca",
+        "newLabelModel": "Modelo",
+        "newLabelSerialNumber": "IMEI / Número de serie",
+        "newLabelColor": "Color",
+        "newLabelAppearance": "Estado estético",
+        "newLabelServiceDetail": "Detalle del servicio(problema)",
+        "newLabelSolutionDetail": "Solución",
+        "newCostRepair": "Costo de reparación",
+        "newAdvance": "Anticipo",
+        "newAssignedTechnician": "Técnico asignado",
+        "newLocation": "Ubicación",
+        "newEstimateDate": "Fecha estimada de entrega",
+        "newEstimateTime": "Hora estimada de entrega",
+        "newLabelUnlockType": "Tipo de desbloqueo",
+        "newLabelUnlockCode": "Código / patrón"
+      },
+      "unlockOptions": {
+        "unspecified": "Sin especificar",
+        "pattern": "Patrón",
+        "pin": "PIN",
+        "password": "Contraseña",
+        "fingerprint": "Huella",
+        "face": "Rostro",
+        "none": "Sin bloqueo"
+      }
+    },
+    "message": {
+      "noDevice": "Aún no has agregado ningún dispositivo"
+    }
+  },
+  "third-step": {
+    "title": "Detalles del servicio",
+    "placeholder": {
+      "branchInput": "Selecciona la sucursal",
+      "statusInitialInput": "Selecciona el estatus inicial",
+      "observationsInput": "Observaciones generales sobre el servicio"
+    },
+    "labelInput": {
+      "dateReception": "Fecha de recepción",
+      "initialStatus": "Estatus",
+      "serviceCode": "Código de servicio",
+      "observations": "Observaciones"
+    }
+  },
+  "summary": {
+    "title": "Resumen y confirmación",
+    "buttonFinish": "Crear servicio",
+    "saving": "Guardando...",
+    "subtitle1": "Información del cliente",
+    "tagExistingUser": "Cliente existente",
+    "tagNotExistingUser": "Cliente nuevo",
+    "subtitle2": "Detalles del servicio",
+    "subtitle3": "Dispositivos",
+    "subtitle4": "Resumen de costos",
+    "total": "Total",
+    "advanceTotal": "Anticipo total",
+    "totalPending": "Saldo pendiente"
+  },
+  "action-modal": {
+    "title": "Servicio {{code}}",
+    "loading": "Cargando servicio...",
+    "loadError": "No fue posible cargar la información del servicio.",
+    "closeButton": "Cerrar",
+    "saveButton": "Guardar cambios",
+    "savingButton": "Guardando...",
+    "performDeliveryButton": "Realizar entrega",
+    "performingDeliveryButton": "Realizando entrega...",
+    "clientUnavailable": "Cliente no disponible",
+    "qrLabel": "QR",
+    "tabs": {
+      "info": "Información",
+      "devices": "Dispositivos",
+      "service": "Servicio",
+      "cancel": "Cancelar servicio",
+      "evidence": "Evidencias"
+    },
+    "labels": {
+      "clientInfo": "Información del cliente",
+      "statusCard": "Estado",
+      "reception": "Recepción",
+      "budget": "Presupuesto",
+      "registeredDevices": "Dispositivos registrados",
+      "problem": "Problema",
+      "finalStatus": "Estatus final"
+    },
+    "deviceSection": {
+      "description": "Edita los equipos del servicio o agrega uno nuevo.",
+      "addDevice": "Agregar dispositivo",
+      "deviceNumber": "Dispositivo #{{number}}",
+      "removeDevice": "Quitar"
+    },
+    "infoSection": {
+      "deviceSummary": "{{type}} • Técnico: {{technician}} • Ubicación: {{location}}"
+    },
+    "evidenceSection": {
+      "description": "Usa el QR para capturar o subir evidencias del servicio desde cualquier dispositivo.",
+      "showQr": "Ver código QR",
+      "openEvidence": "Abrir evidencias"
+    },
+    "cancelSection": {
+      "autofill": "Usar totales del servicio",
+      "labels": {
+        "client": "Cliente",
+        "currentStatus": "Estado actual",
+        "total": "Total",
+        "totalPaid": "Total pagado",
+        "debt": "Adeudo",
+        "amount": "Monto",
+        "cancelStatus": "Estatus de cancelación",
+        "hasRefund": "¿Habrá reembolso?",
+        "refundMethod": "El reembolso generado es en",
+        "cashFromBox": "¿El efectivo es de caja?",
+        "bankAccount": "Cuenta bancaria",
+        "bankFromBox": "¿Será banco de caja?",
+        "boxBank": "Banco de caja",
+        "boxCash": "Caja",
+        "notes": "Notas"
+      },
+      "placeholders": {
+        "status": "Seleccionar estatus",
+        "hasRefund": "Seleccionar opción",
+        "refundMethod": "Seleccionar método",
+        "cashFromBox": "Seleccionar opción",
+        "bankAccount": "Cuenta general",
+        "bankFromBox": "Seleccionar opción",
+        "sourceBox": "Caja principal",
+        "notes": "Detalle adicional de la cancelación (opcional)"
+      },
+      "options": {
+        "yes": "Sí",
+        "no": "No",
+        "cash": "Efectivo",
+        "bank": "Banco"
+      },
+      "buttons": {
+        "cancelService": "Cancelar servicio",
+        "cancelling": "Cancelando servicio..."
+      },
+      "validation": {
+        "statusRequired": "Selecciona el estatus de cancelación.",
+        "amountRequired": "El monto de cancelación debe ser mayor a 0.",
+        "hasRefundRequired": "Indica si habrá reembolso.",
+        "refundMethodRequired": "Selecciona el método de reembolso.",
+        "cashFromBoxRequired": "Indica si el reembolso en efectivo saldrá de caja.",
+        "bankAccountRequired": "Ingresa la cuenta bancaria del reembolso.",
+        "bankFromBoxRequired": "Indica si el reembolso por banco saldrá de caja.",
+        "sourceBoxRequired": "Ingresa la caja o banco de caja de origen."
+      },
+      "toasts": {
+        "success": "Servicio cancelado y guardado correctamente.",
+        "error": "No fue posible cancelar el servicio."
+      }
+    },
+    "closePicker": {
+      "title": "Selecciona el estatus para cerrar el servicio",
+      "description": "No se detectó automáticamente un estatus final con los nombres configurados.",
+      "confirm": "Confirmar entrega",
+      "cancel": "Cancelar",
+      "statusPlaceholder": "Seleccionar estatus"
+    },
+    "toasts": {
+      "loadError": "No fue posible cargar el detalle del servicio.",
+      "deviceAdded": "Dispositivo agregado. Completa su información.",
+      "minimumOneDevice": "Debe existir al menos un dispositivo en el servicio.",
+      "updated": "Servicio actualizado correctamente.",
+      "updateError": "No fue posible actualizar el servicio.",
+      "closed": "Servicio entregado y cerrado correctamente.",
+      "closeError": "No fue posible cerrar el servicio.",
+      "alreadyTerminal": "El servicio ya está en un estatus final.",
+      "manualStatusRequired": "Selecciona manualmente el estatus final para completar la entrega."
+    },
+    "validation": {
+      "selectBranch": "Selecciona una sucursal.",
+      "selectStatus": "Selecciona un estatus.",
+      "receptionRequired": "La fecha de recepción es requerida.",
+      "atLeastOneDevice": "Debes registrar al menos un dispositivo.",
+      "deviceType": "Dispositivo {{number}}: selecciona el tipo.",
+      "deviceBrand": "Dispositivo {{number}}: la marca es requerida.",
+      "deviceModel": "Dispositivo {{number}}: el modelo es requerido.",
+      "deviceProblem": "Dispositivo {{number}}: el detalle del problema es requerido.",
+      "deviceTechnician": "Dispositivo {{number}}: selecciona un técnico asignado.",
+      "deviceLocation": "Dispositivo {{number}}: selecciona una ubicación."
+    },
+    "placeholders": {
+      "deviceType": "Tipo de equipo",
+      "technician": "Seleccionar técnico",
+      "location": "Seleccionar ubicación",
+      "branch": "Seleccionar sucursal",
+      "status": "Seleccionar estatus"
+    },
+    "empty": {
+      "na": "N/A",
+      "withoutType": "Sin tipo",
+      "withoutTechnician": "Sin técnico",
+      "withoutLocation": "Sin ubicación"
+    }
+  },
+  "qr-modal": {
+    "title": "QR de evidencias",
+    "titleWithCode": "QR de evidencias - {{code}}",
+    "description": "Escanea este código para abrir la página de evidencias y subir fotos.",
+    "generating": "Generando QR...",
+    "imageAlt": "Código QR de evidencias",
+    "generateError": "No se pudo generar el código QR.",
+    "copyLink": "Copiar enlace",
+    "openPage": "Abrir página",
+    "close": "Cerrar",
+    "copySuccess": "Enlace copiado al portapapeles.",
+    "copyError": "No fue posible copiar la URL del QR.",
+    "generatePdf": "Generar PDF",
+    "generatingPdf": "Generando PDF…",
+    "pdfError": "No se pudo generar el PDF del servicio.",
+    "popupBlocked": "Permite las ventanas emergentes para generar el PDF.",
+    "pdfDownloaded": "PDF descargado."
+  }
 }

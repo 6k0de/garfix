@@ -1,0 +1,1 @@
+export const ROLES = ['SUPERADMIN', 'ADMIN', 'TECH'] as const

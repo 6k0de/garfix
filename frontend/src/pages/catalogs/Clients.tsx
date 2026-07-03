@@ -16,6 +16,7 @@ import { Modal } from '@/components/ui/Modal'
 import { CatalogForm } from '@/components/ui/CatalogForm'
 import { Trans, useTranslation } from 'react-i18next'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useClientsStore } from '@/utils/store/ClientsStore.tsx'
 import {
   createClient,
@@ -23,6 +24,7 @@ import {
   getClientCatalogs,
   updateClient,
 } from '@/services/catalogs/client.api.ts'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 
 interface CatalogOption {
   id: string
@@ -75,6 +77,7 @@ const initialFormValues: ClientFormPayload = {
 export const Clients: React.FC = () => {
   const { t } = useTranslation(['common', 'client'])
   const { clients, fetchClients } = useClientsStore()
+  const activeBranchId = useActiveBranchId()
   const [catalogs, setCatalogs] = useState<ClientCatalogsResponse>({
     typeClients: [],
     documentTypes: [],
@@ -104,12 +107,20 @@ export const Clients: React.FC = () => {
       return
     }
 
-    setFormValues(initialFormValues)
-  }, [currentClient])
+    setFormValues({
+      ...initialFormValues,
+      branchId: catalogs.branches[0]?.id || activeBranchId || '',
+    })
+  }, [activeBranchId, catalogs.branches, currentClient])
 
   useEffect(() => {
     const loadData = async () => {
+      if (!activeBranchId) return
       try {
+        setCurrentPage(1)
+        setIsModalOpen(false)
+        setIsDeleteModalOpen(false)
+        setCurrentClient(null)
         const [catalogData] = await Promise.all([
           getClientCatalogs(),
           fetchClients(),
@@ -117,12 +128,12 @@ export const Clients: React.FC = () => {
         setCatalogs(catalogData)
       } catch (error) {
         console.error(error)
-        toast.error('No fue posible cargar la información de clientes')
+        toast.error(getApiErrorMessage(error, 'No fue posible cargar la información de clientes'))
       }
     }
 
-    loadData()
-  }, [fetchClients])
+    void loadData()
+  }, [activeBranchId, fetchClients])
 
   const itemsPerPage = 5
   const totalPages = Math.max(1, Math.ceil(clients.length / itemsPerPage))
@@ -175,25 +186,20 @@ export const Clients: React.FC = () => {
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
+    // Solo nombre y teléfono son obligatorios. Correo, dirección, tipo de cliente
+    // y tipo de documento son opcionales.
     if (!formValues.name.trim()) {
       errors.name = t('client:form.validations.name')
     }
     if (!formValues.phone.trim()) {
       errors.phone = t('client:form.validations.phone')
     }
-    if (!formValues.email.trim()) {
+    // Correo opcional: solo se valida el formato si se escribió algo.
+    if (
+      formValues.email.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)
+    ) {
       errors.email = t('client:form.validations.email')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)) {
-      errors.email = t('client:form.validations.email')
-    }
-    if (!formValues.address.trim()) {
-      errors.address = 'La dirección es requerida'
-    }
-    if (!formValues.typeClientId) {
-      errors.typeClientId = t('client:form.validations.typeClient')
-    }
-    if (!formValues.documentTypeId) {
-      errors.documentTypeId = t('client:form.validations.documentType')
     }
     if (!formValues.branchId) {
       errors.branchId = 'La sucursal es requerida'
@@ -231,7 +237,7 @@ export const Clients: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error('No fue posible guardar el cliente')
+      toast.error(getApiErrorMessage(error, 'No fue posible guardar el cliente'))
     } finally {
       setIsSubmitting(false)
     }
@@ -251,7 +257,7 @@ export const Clients: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error('No fue posible eliminar el cliente')
+      toast.error(getApiErrorMessage(error, 'No fue posible eliminar el cliente'))
     } finally {
       setIsSubmitting(false)
     }
@@ -276,14 +282,14 @@ export const Clients: React.FC = () => {
       name: 'email',
       label: t('client:form.newFields.email'),
       type: 'text' as const,
-      required: true,
+      required: false,
       placeholder: t('client:form.newFields.emailPlaceholder'),
     },
     {
       name: 'address',
       label: t('client:form.newFields.address'),
       type: 'text' as const,
-      required: true,
+      required: false,
       placeholder: t('client:form.newFields.addressPlaceholder'),
     },
     {
@@ -300,7 +306,7 @@ export const Clients: React.FC = () => {
       name: 'typeClientId',
       label: t('client:form.newFields.clientType'),
       type: 'select' as const,
-      required: true,
+      required: false,
       options: catalogs.typeClients.map((type) => ({
         value: type.id,
         label: type.name,
@@ -310,7 +316,7 @@ export const Clients: React.FC = () => {
       name: 'documentTypeId',
       label: t('client:form.newFields.documentType'),
       type: 'select' as const,
-      required: true,
+      required: false,
       options: catalogs.documentTypes.map((type) => ({
         value: type.id,
         label: type.name,
@@ -344,7 +350,7 @@ export const Clients: React.FC = () => {
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/60">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('client:table.columns.client')}

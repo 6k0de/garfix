@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Trans, useTranslation } from 'react-i18next'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useLocationsStore } from '@/utils/store/LocationsStore.tsx'
 import {
   createLocation,
@@ -20,6 +21,7 @@ import {
   updateLocation,
 } from '@/services/catalogs/location.api.ts'
 import { useBranchStore } from '@/utils/store/BranchesStore.tsx'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 
 interface BranchOption {
   id: string
@@ -53,6 +55,7 @@ export const LocationsCatalog: React.FC = () => {
   const { t } = useTranslation(['common', 'location'])
   const { locations, fetchLocations } = useLocationsStore()
   const { branches, fetchBranches } = useBranchStore()
+  const activeBranchId = useActiveBranchId()
 
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -63,6 +66,14 @@ export const LocationsCatalog: React.FC = () => {
   const [formValues, setFormValues] = useState<LocationPayload>(initialValues)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const availableBranches = useMemo(
+    () =>
+      activeBranchId
+        ? branches.filter((branch) => branch.id === activeBranchId)
+        : branches,
+    [activeBranchId, branches]
+  )
 
   useEffect(() => {
     if (currentLocation) {
@@ -75,13 +86,21 @@ export const LocationsCatalog: React.FC = () => {
       return
     }
 
-    setFormValues(initialValues)
-  }, [currentLocation])
+    setFormValues({
+      ...initialValues,
+      branchId: availableBranches[0]?.id || activeBranchId || '',
+    })
+  }, [activeBranchId, availableBranches, currentLocation])
 
   useEffect(() => {
-    fetchLocations()
-    fetchBranches()
-  }, [fetchLocations, fetchBranches])
+    setCurrentPage(1)
+    setIsModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setCurrentLocation(null)
+    if (!activeBranchId) return
+    void fetchLocations()
+    void fetchBranches()
+  }, [activeBranchId, fetchBranches, fetchLocations])
 
   const itemsPerPage = 5
   const totalPages = Math.max(1, Math.ceil(locations.length / itemsPerPage))
@@ -183,7 +202,7 @@ export const LocationsCatalog: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error('No fue posible guardar la ubicación')
+      toast.error(getApiErrorMessage(error, 'No fue posible guardar la ubicación'))
     } finally {
       setIsSubmitting(false)
     }
@@ -203,7 +222,7 @@ export const LocationsCatalog: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error(t('location:formDelete.error'))
+      toast.error(getApiErrorMessage(error, t('location:formDelete.error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -215,7 +234,7 @@ export const LocationsCatalog: React.FC = () => {
       label: t('location:formNewLocationLabel.branchInput'),
       type: 'select' as const,
       required: true,
-      options: branches.map((branch) => ({
+      options: availableBranches.map((branch) => ({
         value: branch.id!,
         label: branch.name,
       })),
@@ -261,7 +280,7 @@ export const LocationsCatalog: React.FC = () => {
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/60">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('location:table.columns.name')}

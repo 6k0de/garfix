@@ -7,31 +7,88 @@ datasource db {
 }
 
 model User {
-  id        String           @id @default(uuid())
-  name      String
-  email     String?           @unique
-  password  String?
-  roleId    String
-  companyId String?
-  branchId  String?
+  id          String           @id @default(uuid())
+  name        String
+  email       String?          @unique
+  username    String?          @unique
+  password    String?
+  isActive    Boolean          @default(true)
+  roleId      String
+  companyId   String?
+  branchId    String?
+  createdById String?
   // Relaciones
-  role      Role             @relation(fields: [roleId], references: [id])
-  company   CustomerCompany? @relation(fields: [companyId], references: [id])
-  branch    Branch?          @relation(fields: [branchId], references: [id])
+  role        Role             @relation(fields: [roleId], references: [id])
+  company     CustomerCompany? @relation(fields: [companyId], references: [id])
+  branch      Branch?          @relation(fields: [branchId], references: [id])
+  createdBy   User?            @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers User[]          @relation("UserCreatedBy")
   // Solicitudes creadas/asignadas
-  services  Service[] // Si el usuario es técnico
-  histories StatusHistory[]  @relation("ChangedBy")
+  services    Service[] // Si el usuario es técnico
+  histories   StatusHistory[]  @relation("ChangedBy")
+  sessions    AuthSession[]
 }
 
 model CustomerCompany {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  status    String // el estatus de la licencia, activa, inactiva, pausada, etc
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  branches  Branch[] //sucursales
-  users     User[]
+  id               String   @id @default(uuid())
+  name             String
+  email            String   @unique
+  status           String // el estatus de la licencia, activa, inactiva, pausada, etc
+  subscriptionPlan String   @default("BASIC")
+  subscriptionPrice Float   @default(0)
+  extraBranchPrices Float[] @default([])
+  branchLimit      Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  branches         Branch[] //sucursales
+  users            User[]
+  roles            Role[]
+}
+
+model AuthSession {
+  id         String   @id @default(uuid())
+  tokenHash  String   @unique
+  userId     String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PublicSignupPayment {
+  id                         String   @id @default(uuid())
+  status                     String   @default("pending")
+  mercadoPagoStatus          String?
+  mercadoPagoStatusDetail    String?
+  mercadoPagoPreferenceId    String?  @unique
+  mercadoPagoPaymentId       String?  @unique
+  mercadoPagoInitPoint       String?
+  mercadoPagoSandboxInitPoint String?
+  amount                     Float
+  billingCycle               String   @default("monthly")
+  subscriptionPlan           String
+  companyName                String
+  adminName                  String
+  email                      String
+  username                   String?
+  passwordHash               String
+  initialBranchName          String?
+  initialBranchAddress       String?
+  companyId                  String?
+  userId                     String?
+  rawPayment                 Json?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Branch {
@@ -43,7 +100,11 @@ model Branch {
   clients         Client[]
   users           User[]
   serviceRequests ServiceRequest[]
+  statuses        Status[]
   locations       Location[]
+  deviceTypes     DeviceType[]
+  documentTypes   DocumentType[]
+  typeClients     TypeClient[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -57,6 +118,8 @@ model Service {
   imei             String
   color            String
   appearance       String // estetica
+  unlockType       String   @default("") // PATTERN, PIN, PASSWORD, FINGERPRINT, FACE, NONE
+  unlockCode       String   @default("") // código/patrón opcional
   serviceDetail    String
   serviceSolution  String
   cost             Float
@@ -93,6 +156,7 @@ model ServiceRequest {
   services    Service[]
   histories   StatusHistory[]
   attachments Attachment[]
+  cancellation ServiceCancellation?
 }
 
 model StatusHistory {
@@ -127,11 +191,11 @@ model Client {
   phone           String
   email           String
   address         String
-  typeClientId    String
-  documentTypeId  String
+  typeClientId    String?
+  documentTypeId  String?
   branchId        String
-  typeClient      TypeClient       @relation(fields: [typeClientId], references: [id])
-  documentType    DocumentType     @relation(fields: [documentTypeId], references: [id])
+  typeClient      TypeClient?      @relation(fields: [typeClientId], references: [id])
+  documentType    DocumentType?    @relation(fields: [documentTypeId], references: [id])
   branch          Branch           @relation(fields: [branchId], references: [id])
   serviceRequests ServiceRequest[]
 }
@@ -139,47 +203,101 @@ model Client {
 // Catalogos
 
 model Role {
-  id          String @id @default(uuid())
-  name        String @unique // Admin, branch_user, etc
-  description String
+  id          String           @id @default(uuid())
+  code        String           @unique @db.VarChar(50)
+  name        String // Admin, branch_user, etc
+  description String?
+  companyId   String?
+  company     CustomerCompany? @relation(fields: [companyId], references: [id])
   users       User[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
 }
 
 model Status {
   id               String           @id @default(uuid())
-  name             String           @unique // Recibido, En proceso, Entregado, etc
+  name             String // Recibido, En proceso, Entregado, etc
   description      String?
+  colorHex         String           @default("#64748B")
+  branchId         String?
+  branch           Branch?          @relation(fields: [branchId], references: [id])
   histories        StatusHistory[]
   servicesRequests ServiceRequest[]
+  cancellations    ServiceCancellation[]
+
+  @@unique([branchId, name])
+  @@index([branchId])
+}
+
+model ServiceCancellation {
+  id               String       @id @default(uuid())
+  serviceRequestId Int          @unique
+  statusId         String
+  total            Float
+  totalPaid        Float
+  debt             Float
+  amount           Float
+  hasRefund        Boolean
+  refundMethod     RefundMethod?
+  cashFromBox      Boolean?
+  bankAccount      String?
+  bankFromBox      Boolean?
+  sourceBoxName    String?
+  notes            String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  status         Status         @relation(fields: [statusId], references: [id])
+}
+
+enum RefundMethod {
+  CASH
+  BANK
 }
 
 model Location {
   id          String    @id @default(uuid())
-  name        String    @unique
+  name        String
   intructions String?
   branchId    String
   branch      Branch    @relation(fields: [branchId], references: [id])
   services    Service[]
+
+  @@unique([branchId, name])
 }
 
 model DeviceType {
   id          String    @id @default(uuid())
-  name        String    @unique
+  name        String
   description String?
   isActive    Boolean?  @default(true)
+  branchId    String?
+  branch      Branch?   @relation(fields: [branchId], references: [id])
   services    Service[]
+
+  @@unique([branchId, name])
 }
 
 model DocumentType {
   id          String   @id @default(uuid())
-  name        String   @unique
+  name        String
   description String?
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
   clients     Client[]
+
+  @@unique([branchId, name])
 }
 
 model TypeClient {
   id          String   @id @default(uuid())
-  name        String   @unique
+  name        String
   description String?
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
   clients     Client[]
+
+  @@unique([branchId, name])
 }

@@ -67,6 +67,8 @@ prisma/*-journal
 *.db
 *.db-journal
 *.sql
+!backend/prisma/migrations/**/*.sql
+!prisma/migrations/**/*.sql
 *.bak
 
 # --- Docker (opcionales) ---
@@ -78,3 +80,7 @@ docker-compose.override.yml
 *.zip
 *.7z
 *.rar
+
+# --- Reportes de auditoría de seguridad (internos, no publicar) ---
+garfix-security-audit.html
+garfix-security-audit.pdf

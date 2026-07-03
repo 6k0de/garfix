@@ -1,5 +1,7 @@
 import { Slot } from '@radix-ui/react-slot'
 import { cva } from 'class-variance-authority'
+import { Children, cloneElement, isValidElement } from 'react'
+import type React from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -8,6 +10,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        primary:
+          'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500',
         default:
           'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500',
         destructive:
@@ -15,7 +19,7 @@ const buttonVariants = cva(
         outline:
           'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
         secondary:
-          'bg-gray-200 text-secondary-foreground hover:bg-secondary/80 focus:ring-ring',
+          'bg-gray-200 text-secondary-foreground hover:bg-secondary/80 focus:ring-ring dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600',
         ghost:
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
@@ -34,6 +38,23 @@ const buttonVariants = cva(
   }
 )
 
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  className?: string
+  variant?:
+    | 'primary'
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+  icon?: React.ReactNode
+  children?: React.ReactNode
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  asChild?: boolean
+  fullWidth?: boolean
+}
+
 export const Button = ({
   className,
   variant,
@@ -41,18 +62,44 @@ export const Button = ({
   children,
   size,
   asChild = false,
+  fullWidth = false,
   ...props
-}: any) => {
+}: ButtonProps) => {
   const Comp = asChild ? Slot : 'button'
+  const renderContent = (contentChildren: React.ReactNode) => (
+    <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+      {icon && <span className="inline-flex shrink-0 items-center">{icon}</span>}
+      {contentChildren}
+    </span>
+  )
+
+  if (asChild) {
+    const child = Children.only(children)
+
+    if (!isValidElement<{ children?: React.ReactNode }>(child)) {
+      return null
+    }
+
+    return (
+      <Comp
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size }), fullWidth && 'w-full', className)}
+        {...props}
+      >
+        {cloneElement(child, {
+          children: renderContent(child.props.children),
+        })}
+      </Comp>
+    )
+  }
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), fullWidth && 'w-full', className)}
       {...props}
     >
-      {icon && <span>{icon}</span>}
-      {children}
+      {renderContent(children)}
     </Comp>
   )
 }

@@ -1,12 +1,92 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <meta name="theme-color" content="#f6f3ee" />
+
+    <!-- SEO principal -->
+    <title>Garfix — Software de gestión para talleres de servicio</title>
+    <meta
+      name="description"
+      content="Garfix es la plataforma para talleres de servicio: administra órdenes, técnicos, sucursales, evidencias por QR y cobros con Mercado Pago en un solo lugar. Comienza gratis."
+    />
+    <meta
+      name="keywords"
+      content="software para talleres, gestión de servicios, órdenes de servicio, taller de reparación, control de técnicos, evidencias QR, cobros Mercado Pago, SaaS taller"
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Garfix" />
+    <link rel="canonical" href="https://garfix.mx/" />
+
+    <!-- Iconos -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Open Graph (redes sociales) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Garfix" />
+    <meta property="og:locale" content="es_MX" />
+    <meta property="og:url" content="https://garfix.mx/" />
+    <meta property="og:title" content="Garfix — Software de gestión para talleres de servicio" />
+    <meta
+      property="og:description"
+      content="Administra órdenes, técnicos, sucursales, evidencias por QR y cobros con Mercado Pago en un solo lugar."
+    />
+    <meta property="og:image" content="https://garfix.mx/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Garfix — Software de gestión para talleres de servicio" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Garfix — Software de gestión para talleres de servicio" />
+    <meta
+      name="twitter:description"
+      content="Administra órdenes, técnicos, sucursales, evidencias por QR y cobros con Mercado Pago en un solo lugar."
+    />
+    <meta name="twitter:image" content="https://garfix.mx/og-image.png" />
+
+    <!-- Fuentes: preconnect + carga no bloqueante con display=swap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    />
+
+    <!-- Datos estructurados (rich results) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Garfix",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Plataforma de gestión para talleres de servicio: órdenes de servicio, técnicos, sucursales, evidencias por QR y cobros con Mercado Pago.",
+        "url": "https://garfix.mx/",
+        "inLanguage": "es",
+        "offers": {
+          "@type": "Offer",
+          "price": "259",
+          "priceCurrency": "MXN",
+          "category": "Suscripción mensual"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Garfix",
+          "url": "https://garfix.mx/"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      Garfix es el software de gestión para talleres de servicio: órdenes,
+      técnicos, sucursales, evidencias por QR y cobros con Mercado Pago.
+      Activa JavaScript para usar la aplicación.
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

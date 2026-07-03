@@ -15,6 +15,8 @@ import { Trans, useTranslation } from 'react-i18next'
 import { useDevicesStore } from '@/utils/store/DevicesStore.tsx'
 import { createDevice, deleteDevice, updateDevice } from '@/services/catalogs/device.api.ts'
 import toast, {Toaster} from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 export interface DeviceType {
   id?: string
   name: string
@@ -24,6 +26,7 @@ export interface DeviceType {
 export const DevicesCatalog: React.FC = () => {
   const { deviceTypes, fetchDevices } = useDevicesStore()
   const { t } = useTranslation(['common', 'device', 'roles'])
+  const activeBranchId = useActiveBranchId()
 
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -55,8 +58,13 @@ export const DevicesCatalog: React.FC = () => {
   }, [currentDeviceType])
 
   useEffect(() => {
-    fetchDevices()
-  }, [fetchDevices])
+    setCurrentPage(1)
+    setIsModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setCurrentDeviceType(null)
+    if (!activeBranchId) return
+    void fetchDevices()
+  }, [activeBranchId, fetchDevices])
 
   const itemsPerPage = 5
   const totalPages = Math.ceil(deviceTypes.length / itemsPerPage)
@@ -142,7 +150,7 @@ export const DevicesCatalog: React.FC = () => {
         }
       } catch(error) {
         console.error(error)
-        toast.error(t('device:message.errorUpdate'))
+        toast.error(getApiErrorMessage(error, t('device:message.errorUpdate')))
       } finally{
         setIsSubmitting(false)
       }
@@ -165,7 +173,7 @@ export const DevicesCatalog: React.FC = () => {
         }
       }catch (error){
         console.error(error)
-        toast.error(t('device:message.errorCreate'))
+        toast.error(getApiErrorMessage(error, t('device:message.errorCreate')))
       }finally{
         setIsSubmitting(false)
       }
@@ -189,7 +197,7 @@ export const DevicesCatalog: React.FC = () => {
       }
     }catch (error){
       console.error(error)
-      toast.error(t('device:message.errorDelete'))
+      toast.error(getApiErrorMessage(error, t('device:message.errorDelete')))
     }finally {
       setIsSubmitting(false)
     }
@@ -235,7 +243,7 @@ export const DevicesCatalog: React.FC = () => {
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/60">
               <tr>
                 <th
                   scope="col"

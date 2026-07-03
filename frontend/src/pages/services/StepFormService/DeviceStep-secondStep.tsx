@@ -43,6 +43,8 @@ const buildEmptyDevice = (
     serialNumber: '',
     color: '',
     appearance: '',
+    unlockType: '',
+    unlockCode: '',
     problem: '',
     solution: '',
     cost: '',
@@ -546,6 +548,71 @@ export const DeviceStep: React.FC<DeviceStepProps> = ({
                   'services:second-step.newDevice.placeholder.newColorInput'
                 )}
                 value={currentDevice.color}
+                onChange={handleDeviceChange}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="unlockType"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                {t('services:second-step.newDevice.labelInput.newLabelUnlockType')}
+              </label>
+              <Select
+                value={currentDevice.unlockType}
+                onValueChange={(value) =>
+                  handleDeviceChange({
+                    target: { name: 'unlockType', value },
+                  } as React.ChangeEvent<HTMLInputElement>)
+                }
+              >
+                <SelectTrigger className="bg-white dark:bg-gray-800 w-full py-4.5 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <SelectValue
+                    placeholder={t(
+                      'services:second-step.newDevice.unlockOptions.unspecified'
+                    )}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PATTERN">
+                    {t('services:second-step.newDevice.unlockOptions.pattern')}
+                  </SelectItem>
+                  <SelectItem value="PIN">
+                    {t('services:second-step.newDevice.unlockOptions.pin')}
+                  </SelectItem>
+                  <SelectItem value="PASSWORD">
+                    {t('services:second-step.newDevice.unlockOptions.password')}
+                  </SelectItem>
+                  <SelectItem value="FINGERPRINT">
+                    {t('services:second-step.newDevice.unlockOptions.fingerprint')}
+                  </SelectItem>
+                  <SelectItem value="FACE">
+                    {t('services:second-step.newDevice.unlockOptions.face')}
+                  </SelectItem>
+                  <SelectItem value="NONE">
+                    {t('services:second-step.newDevice.unlockOptions.none')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="unlockCode"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                {t('services:second-step.newDevice.labelInput.newLabelUnlockCode')}
+              </label>
+              <input
+                type="text"
+                id="unlockCode"
+                name="unlockCode"
+                className="bg-white dark:bg-gray-800 block w-full py-2 px-3 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder={t(
+                  'services:second-step.newDevice.placeholder.newUnlockCodeInput'
+                )}
+                value={currentDevice.unlockCode}
                 onChange={handleDeviceChange}
               />
             </div>

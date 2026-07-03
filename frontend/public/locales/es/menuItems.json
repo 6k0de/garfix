@@ -4,6 +4,7 @@
   "inventory": "Inventario",
   "catalogs": "Catálogos",
   "settings": "Configuración",
+  "superadmin": "Super administrador",
   "submenu": {
     "workshop": {
       "services": "Nuevo servicio",
@@ -19,6 +20,11 @@
       "status": "Estatus",
       "locations": "Ubicaciones",
       "devices": "Dispositivos"
+    },
+    "superadmin": {
+      "dashboard": "Dashboard global",
+      "clients": "Gestión de clientes",
+      "newClient": "Nuevo cliente"
     }
   }
 }

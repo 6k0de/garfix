@@ -34,6 +34,10 @@ import documentType_es from '../public/locales/es/catalogs/document-types.json'
 import documentType_en from '../public/locales/en/catalogs/document-types.json'
 import typeClient_es from '../public/locales/es/catalogs/type-clients.json'
 import typeClient_en from '../public/locales/en/catalogs/type-clients.json'
+import landing_es from '../public/locales/es/landing.json'
+import landing_en from '../public/locales/en/landing.json'
+import home_es from '../public/locales/es/home.json'
+import home_en from '../public/locales/en/home.json'
 
 i18n
   .use(LanguageDetector) // detecta por localStorage, navigator, etc.
@@ -54,6 +58,8 @@ i18n
       'profile',
       'documentType',
       'typeClient',
+      'landing',
+      'home',
     ],
     defaultNS: 'common',
     resources: {
@@ -73,6 +79,8 @@ i18n
         client: client_es,
         documentType: documentType_es,
         typeClient: typeClient_es,
+        landing: landing_es,
+        home: home_es,
       },
       en: {
         common: common_en,
@@ -90,6 +98,8 @@ i18n
         client: client_en,
         documentType: documentType_en,
         typeClient: typeClient_en,
+        landing: landing_en,
+        home: home_en,
       },
     },
     interpolation: {

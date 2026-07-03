@@ -4,7 +4,7 @@ export const branchSchema = z
   .object({
     id: z.string().optional(),
     name: z.string().trim().min(1, 'name is required'),
-    address: z.string().trim().min(1, 'address is required'),
+    address: z.string().trim().min(1, 'address is required').optional(),
   })
   .strict()
 

@@ -2,6 +2,60 @@ import { Request, Response } from 'express'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../../lib/prisma.js'
 import { typeClientSchema, updateTypeClientSchema } from './type-client.schema.js'
+import { resolveCompanyScope } from '../../../lib/companyScope.js'
+import { sendError } from '../../../lib/httpErrors.js'
+
+const TECH_TYPE_CLIENT_FORBIDDEN_MESSAGE =
+  'El perfil técnico no tiene permisos para administrar tipos de cliente.'
+const BRANCH_SCOPE_REQUIRED_MESSAGE =
+  'Debes seleccionar una sucursal activa para administrar tipos de cliente.'
+
+const resolveTypeClientScope = async (req: Request, res: Response) => {
+  const scope = await resolveCompanyScope(req)
+  if (!scope) {
+    res.status(401).json({
+      error: 'No autorizado',
+      message: 'Debes iniciar sesión para administrar tipos de cliente.',
+    })
+    return null
+  }
+
+  if (scope.isTechnician) {
+    res.status(403).json({
+      error: 'Acceso denegado',
+      message: TECH_TYPE_CLIENT_FORBIDDEN_MESSAGE,
+    })
+    return null
+  }
+
+  if (!scope.branchId) {
+    res.status(400).json({
+      error: 'Sucursal requerida',
+      message: BRANCH_SCOPE_REQUIRED_MESSAGE,
+    })
+    return null
+  }
+
+  const ownedBranch = await prisma.branch.findFirst({
+    where: {
+      id: scope.branchId,
+      companyId: scope.companyId,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!ownedBranch) {
+    res.status(403).json({
+      error: 'Acceso denegado',
+      message: 'La sucursal activa no pertenece a tu empresa.',
+    })
+    return null
+  }
+
+  return scope
+}
 
 export const createTypeClient = async (req: Request, res: Response) => {
   const parsed = typeClientSchema.safeParse(req.body)
@@ -14,10 +68,16 @@ export const createTypeClient = async (req: Request, res: Response) => {
   const { name, description } = parsed.data
 
   try {
+    const scope = await resolveTypeClientScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
     const typeClient = await prisma.typeClient.create({
       data: {
         name,
-        description: description ?? null,
+        description: description?.trim() || null,
+        branchId: scope.branchId,
       },
       select: {
         id: true,
@@ -31,7 +91,6 @@ export const createTypeClient = async (req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe un tipo de cliente con ese nombre.',
-          meta: err.meta,
         })
       }
     }
@@ -41,9 +100,20 @@ export const createTypeClient = async (req: Request, res: Response) => {
   }
 }
 
-export const getAllTypeClients = async (_: Request, res: Response) => {
+export const getAllTypeClients = async (req: Request, res: Response) => {
   try {
+    const scope = await resolveTypeClientScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
     const typeClients = await prisma.typeClient.findMany({
+      where: {
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
       orderBy: {
         name: 'asc',
       },
@@ -68,11 +138,7 @@ export const getAllTypeClients = async (_: Request, res: Response) => {
 
     return res.status(200).json(result)
   } catch (error) {
-    console.error('Error obteniendo tipos de cliente:', error)
-    return res.status(500).json({
-      error: 'Error al obtener tipos de cliente',
-      details: error instanceof Error ? error.message : error,
-    })
+    return sendError(res, error, 'No fue posible obtener los tipos de cliente.')
   }
 }
 
@@ -86,10 +152,44 @@ export const updateTypeClient = async (req: Request, res: Response) => {
 
   const { id, ...data } = parsed.data
 
+  if (!id) {
+    return res.status(400).json({ error: 'El id del tipo de cliente es requerido' })
+  }
+
   try {
+    const scope = await resolveTypeClientScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
+    const ownedTypeClient = await prisma.typeClient.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedTypeClient) {
+      return res.status(404).json({ error: 'Tipo de cliente no encontrado' })
+    }
+
+    const updateData: Prisma.TypeClientUpdateInput = {}
+    if (typeof data.name === 'string') {
+      updateData.name = data.name
+    }
+    if (typeof data.description === 'string') {
+      updateData.description = data.description.trim() || null
+    }
+
     await prisma.typeClient.update({
       where: { id },
-      data,
+      data: updateData,
     })
 
     return res.status(200).json()
@@ -99,7 +199,6 @@ export const updateTypeClient = async (req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe un tipo de cliente con ese nombre.',
-          meta: err.meta,
         })
       }
       if (err.code === 'P2025') {
@@ -119,6 +218,28 @@ export const deleteTypeClient = async (req: Request, res: Response) => {
   }
 
   try {
+    const scope = await resolveTypeClientScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
+    const ownedTypeClient = await prisma.typeClient.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedTypeClient) {
+      return res.status(404).json({ error: 'Tipo de cliente no encontrado' })
+    }
+
     await prisma.typeClient.delete({
       where: { id },
     })

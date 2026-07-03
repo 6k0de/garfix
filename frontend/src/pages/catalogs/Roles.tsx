@@ -19,11 +19,12 @@ import type React from 'react'
 import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useRoleStore } from '@/utils/store/RolesStore.tsx'
 export interface Role {
   id?: string
   name: string
-  description: string
+  description?: string
   usersCount?: number
 }
 export const RolesCatalog: React.FC = () => {
@@ -46,7 +47,7 @@ export const RolesCatalog: React.FC = () => {
       setFormValues({
         id: currentRole.id,
         name: currentRole.name,
-        description: currentRole.description,
+        description: currentRole.description || '',
       })
     } else {
       setFormValues({
@@ -145,7 +146,7 @@ export const RolesCatalog: React.FC = () => {
           setCurrentPage(1)
         }
       } catch (error) {
-       toast.error(t('roles:message.errorUpdate'))
+       toast.error(getApiErrorMessage(error, t('roles:message.errorUpdate')))
         console.error(error)
       }finally{
         setIsSubmitign(false)
@@ -170,7 +171,7 @@ export const RolesCatalog: React.FC = () => {
         }
       } catch (error) {
         console.error(error)
-        toast.error(t('roles:message.errorCreate'))
+        toast.error(getApiErrorMessage(error, t('roles:message.errorCreate')))
       } finally {
         setIsSubmitign(false)
       }
@@ -194,7 +195,7 @@ export const RolesCatalog: React.FC = () => {
       }
     } catch (error) {
       console.error(error)
-      toast.error(t('roles:message.errorDelete'))
+      toast.error(getApiErrorMessage(error, t('roles:message.errorDelete')))
     }finally{
       setIsSubmitign(false)
     }
@@ -246,7 +247,7 @@ export const RolesCatalog: React.FC = () => {
         <Card className="py-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
+              <thead className="bg-gray-50 dark:bg-gray-900/60">
                 <tr>
                   <th
                     scope="col"

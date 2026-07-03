@@ -19,7 +19,9 @@ import {
   updateBranch,
 } from '@/services/catalogs/branch.api'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useBranchStore } from '@/utils/store/BranchesStore.tsx'
+import { getAuthUser } from '@/lib/auth'
 export interface Branch {
   id?: string
   name: string
@@ -30,6 +32,10 @@ export interface Branch {
 export const Branches: React.FC = () => {
   const {branches, fetchBranches} = useBranchStore()
   const { t } = useTranslation(['common', 'branch'])
+  const user = getAuthUser()
+  const branchLimit = user?.company?.branchLimit ?? 0
+  const usedBranches = branches.length
+  const availableBranches = Math.max(0, branchLimit - usedBranches)
   const [currentPage, setCurrentPage] = useState(1)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -148,9 +154,8 @@ export const Branches: React.FC = () => {
           await fetchBranches()
           setCurrentPage(1)
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        toast.error(t('branch:message.errorUpdate'))
+        toast.error(getApiErrorMessage(err, t('branch:message.errorUpdate')))
       } finally {
         setIsSubmitting(false)
       }
@@ -175,7 +180,7 @@ export const Branches: React.FC = () => {
         }
       } catch (error) {
         console.error(error)
-        toast.error(t('branch:message.errorCreate'))
+        toast.error(getApiErrorMessage(error, t('branch:message.errorCreate')))
       } finally {
         setIsSubmitting(false)
       }
@@ -201,7 +206,7 @@ export const Branches: React.FC = () => {
       }
     } catch (error) {
       console.error(error)
-      toast.error(t('branch:message.errorDelete'))
+      toast.error(getApiErrorMessage(error, t('branch:message.errorDelete')))
     } finally {
       setIsSubmitting(false)
     }
@@ -235,6 +240,10 @@ export const Branches: React.FC = () => {
             <p className="mt-1 text-gray-600 dark:text-gray-400">
               {t('branch:subtitle')}
             </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
+              Sucursales usadas: <span className="font-semibold">{usedBranches}</span> / {branchLimit}{' '}
+              · Disponibles: <span className="font-semibold">{availableBranches}</span>
+            </p>
           </div>
           <div className="mt-4 md:mt-0">
             <Button
@@ -249,7 +258,7 @@ export const Branches: React.FC = () => {
         <Card className="py-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
+              <thead className="bg-gray-50 dark:bg-gray-900/60">
                 <tr>
                   <th
                     scope="col"

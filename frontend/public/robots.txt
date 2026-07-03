@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /services
+Disallow: /catalogs
+Disallow: /superadmin
+Disallow: /evidencias
+
+Sitemap: https://garfix.mx/sitemap.xml

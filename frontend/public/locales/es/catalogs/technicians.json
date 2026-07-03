@@ -1,41 +1,49 @@
 {
-    "title": "Catálogo de Técnicos",
-    "subtitle": "Administra el personal técnico de la empresa",
-    "newBotton": "Nuevo Técnico",
-    "form": {
-        "validations": {
-            "name": "El nombre es requerido",
-            "branch": "La sucursal es requerida",
-            "role": "El rol es requerido"
-        },
-        "formNewFields": {
-            "name": "Nombre completo",
-            "namePlaceholder": "Nombre completo del técnico",
-            "email": "Correo electrónico",
-            "emailPlaceholder": "correo@ejemplo.com",
-            "branch": "Sucursal",
-            "role": "Rol"
-        }
+  "title": "Catálogo de Técnicos",
+  "subtitle": "Administra el personal técnico de la empresa",
+  "newBotton": "Nuevo Técnico",
+  "form": {
+    "validations": {
+      "name": "El nombre es requerido",
+      "email": "El correo es requerido",
+      "branch": "La sucursal es requerida",
+      "role": "El rol es requerido",
+      "password": "La contraseña debe tener al menos 8 caracteres",
+      "emailOrUsername": "Proporciona un correo o un nombre de usuario"
     },
-    "table": {
-        "columns": {
-            "technic": "Técnico",
-            "contact": "Contacto",
-            "numService": "No. Servicios",
-            "role": "Rol"
-        },
-        "noData": "No hay técnicos registrados"
+    "formNewFields": {
+      "name": "Nombre completo",
+      "namePlaceholder": "Nombre completo del técnico",
+      "email": "Correo electrónico (opcional)",
+      "emailPlaceholder": "correo@ejemplo.com",
+      "password": "Contraseña de acceso (opcional)",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "passwordEditPlaceholder": "Déjala vacía para mantener la actual",
+      "branch": "Sucursal",
+      "role": "Rol",
+      "username": "Nombre de usuario",
+      "usernamePlaceholder": "usuario123"
+    }
+  },
+  "table": {
+    "columns": {
+      "technic": "Técnico",
+      "contact": "Contacto",
+      "numService": "No. Servicios",
+      "role": "Rol"
     },
-    "modal": {
-        "new": "Nuevo Técnico",
-        "edit": "Editar Técnico"
-    },
-    "formDelete": {
-        "title": "Confirmar Eliminación",
-        "message": "¿Estás seguro de que deseas eliminar al técnico <strong>{{technic}}</strong> ?",
-        "delete": "Eliminar",
-        "deleting": "Eliminando..."
-    },
+    "noData": "No hay técnicos registrados"
+  },
+  "modal": {
+    "new": "Nuevo Técnico",
+    "edit": "Editar Técnico"
+  },
+  "formDelete": {
+    "title": "Confirmar Eliminación",
+    "message": "¿Estás seguro de que deseas eliminar al técnico <strong>{{technic}}</strong> ?",
+    "delete": "Eliminar",
+    "deleting": "Eliminando..."
+  },
   "message": {
     "successCreate": "Técnico creado correctamente",
     "errorCreate": "No se pudo crear el Técnico",

@@ -5,10 +5,17 @@ export const clientSchema = z
     id: z.string().optional(),
     name: z.string().trim().min(1, 'name is required'),
     phone: z.string().trim().min(1, 'phone is required'),
-    email: z.string().trim().email('email is invalid'),
-    address: z.string().trim().min(1, 'address is required'),
-    typeClientId: z.string().trim().min(1, 'typeClientId is required'),
-    documentTypeId: z.string().trim().min(1, 'documentTypeId is required'),
+    // Solo nombre y teléfono son obligatorios; el resto es opcional.
+    email: z
+      .string()
+      .trim()
+      .email('email is invalid')
+      .optional()
+      .nullable()
+      .or(z.literal('')),
+    address: z.string().trim().optional().nullable(),
+    typeClientId: z.string().trim().optional().nullable(),
+    documentTypeId: z.string().trim().optional().nullable(),
     branchId: z.string().trim().min(1, 'branchId is required'),
   })
   .strict()

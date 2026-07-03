@@ -1,0 +1,334 @@
+{
+  "nav": {
+    "features": "Features",
+    "workflow": "Workflow",
+    "pricing": "Pricing",
+    "login": "Login",
+    "startDemo": "Get started"
+  },
+  "hero": {
+    "eyebrow": "Multi-branch software for repair shops",
+    "title": "Manage Your Tech Repair Business From One Smart Platform.",
+    "description": "Garfix keeps branches, customers, devices, service orders, technicians, and evidence aligned inside one calm workspace.",
+    "primaryCta": "Get started",
+    "secondaryCta": "View Features",
+    "audiences": {
+      "phoneRepair": "Phone Repair",
+      "laptopService": "Laptop Service",
+      "consoleRepair": "Console Repair",
+      "electronicsLabs": "Electronics Labs"
+    },
+    "dashboard": {
+      "eyebrow": "Live overview",
+      "title": "One view for the whole shop",
+      "stats": {
+        "active": {
+          "label": "Active",
+          "description": "Repairs in progress"
+        },
+        "branches": {
+          "label": "Branches",
+          "description": "Running independently"
+        },
+        "delivery": {
+          "label": "Delivery",
+          "description": "Average refresh time"
+        }
+      },
+      "queue": {
+        "title": "Today's queue",
+        "subtitle": "Branch-aware service tracking",
+        "statusDiagnosis": "Diagnosis",
+        "statusBoardRepair": "Board repair",
+        "statusReady": "Ready"
+      },
+      "branchPulse": {
+        "title": "Branch pulse",
+        "branch": "Monterrey Centro",
+        "load": "72% load"
+      },
+      "scope": {
+        "title": "Scoped access",
+        "description": "Admins control the full operation while technicians only see the work that belongs to their branch."
+      }
+    }
+  },
+  "value": {
+    "cards": {
+      "updates": {
+        "title": "No more scattered updates",
+        "description": "Repairs, notes, files, and customer status stay in one place."
+      },
+      "branches": {
+        "title": "Cleaner branch control",
+        "description": "Each branch keeps its own technicians, customers, and service flow."
+      },
+      "desk": {
+        "title": "A calmer front desk",
+        "description": "Intake, tracking, and delivery feel organized instead of reactive."
+      }
+    }
+  },
+  "features": {
+    "eyebrow": "Features",
+    "title": "Less friction. Better repair operations.",
+    "description": "Every block is designed to reduce noise at the desk, on the bench, and across the business.",
+    "cards": {
+      "branchCatalogs": {
+        "title": "Branch-specific catalogs",
+        "description": "Statuses, devices, locations, customers, and technicians stay scoped to the right branch."
+      },
+      "repairTracking": {
+        "title": "Repair order tracking",
+        "description": "Move every device from intake to delivery with clear history, technician assignment, and status."
+      },
+      "roles": {
+        "title": "Role-based access",
+        "description": "Admins see the full operation. Technicians only see what they need to work."
+      },
+      "dashboards": {
+        "title": "Owner dashboards",
+        "description": "See branch load, active repairs, and delivery progress without digging for data."
+      }
+    }
+  },
+  "workflow": {
+    "eyebrow": "Workflow",
+    "title": "A repair flow the whole team can follow.",
+    "description": "From receiving a device to delivering it back, the process stays simple and readable.",
+    "steps": {
+      "receive": {
+        "title": "Receive",
+        "description": "Create the job and register the device."
+      },
+      "assign": {
+        "title": "Assign",
+        "description": "Route the job to the right technician and branch."
+      },
+      "repair": {
+        "title": "Repair",
+        "description": "Track status, notes, costs, and evidence."
+      },
+      "deliver": {
+        "title": "Deliver",
+        "description": "Close with full history ready for future visits."
+      }
+    }
+  },
+  "branches": {
+    "eyebrow": "Multi-branch control",
+    "title": "Each branch feels local. The business still feels unified.",
+    "description": "Admins can create branches, assign technicians, and monitor services without mixing the daily work of one location with another.",
+    "items": {
+      "customers": "Customers and devices stay tied to the correct branch",
+      "technicians": "Technicians work inside their own operational scope",
+      "realtime": "Switching branches refreshes service views in real time"
+    },
+    "snapshot": {
+      "eyebrow": "Owner snapshot",
+      "title": "See the business without noise.",
+      "collected": {
+        "label": "Collected",
+        "description": "Visible across active branches"
+      },
+      "load": {
+        "label": "Active load",
+        "description": "Live operational pulse"
+      },
+      "performance": {
+        "title": "Branch performance",
+        "period": "This week"
+      }
+    }
+  },
+  "pricing": {
+    "eyebrow": "Pricing",
+    "title": "Choose the plan that matches your repair floor.",
+    "description": "Simple plans for single-shop teams, growing branch networks, and larger operations.",
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "month": "/month",
+      "year": "/year"
+    },
+    "currencyNote": "USD values are estimated from the configured MXN exchange rate.",
+    "planCard": {
+      "featured": "Most Popular",
+      "includedBranches": "Included branches",
+      "extraBranchCost": "Extra branch cost",
+      "choose": "Choose {{plan}}"
+    },
+    "plans": {
+      "BASIC": {
+        "name": "Basic",
+        "tagline": "For small shops that want order",
+        "description": "Control intake, customers, devices, work orders, and evidence from one place.",
+        "features": {
+          "one": "1 branch included",
+          "two": "Repair intake and tracking",
+          "three": "Customers, devices, and service history",
+          "four": "QR follow-up and evidence files"
+        }
+      },
+      "PRO": {
+        "name": "Pro",
+        "tagline": "Ideal for multi-branch operations",
+        "description": "Coordinate technicians, branch-specific catalogs, repair queues, and dashboards without losing control.",
+        "features": {
+          "one": "3 branches included",
+          "two": "Branch-specific customers and technicians",
+          "three": "Scoped statuses, devices, and locations",
+          "four": "Executive and operational visibility"
+        }
+      },
+      "ENTERPRISE": {
+        "name": "Enterprise",
+        "tagline": "For networks with serious service volume",
+        "description": "Operate a full repair network with stronger visibility, control, and scale.",
+        "features": {
+          "one": "10 branches included",
+          "two": "Advanced branch scaling",
+          "three": "End-to-end pipeline oversight",
+          "four": "Designed for larger support teams"
+        }
+      }
+    }
+  },
+  "finalCta": {
+    "eyebrow": "Final CTA",
+    "title": "Run a calmer repair business with less chasing and more clarity.",
+    "description": "Get started, choose a plan, and set up your main branch in minutes.",
+    "primary": "Get started",
+    "secondary": "See Pricing"
+  },
+  "checkout": {
+    "back": "Back to landing",
+    "login": "Login",
+    "eyebrow": {
+      "demo": "Get started",
+      "checkout": "Public checkout"
+    },
+    "title": "Set up your repair workspace.",
+    "description": "Choose a plan, create the admin account, and pay your license with Mercado Pago to get started.",
+    "mode": {
+      "trial": "Trial mode",
+      "public": "Public checkout"
+    },
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "month": "/month",
+      "year": "/year"
+    },
+    "form": {
+      "companyName": {
+        "label": "Business name",
+        "placeholder": "Northside Tech Repair",
+        "error": "Enter your business name."
+      },
+      "name": {
+        "label": "Admin name",
+        "placeholder": "Alex Rivera",
+        "error": "Enter the admin name."
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "owner@repairshop.com",
+        "error": "Enter a valid email address."
+      },
+      "username": {
+        "label": "Username",
+        "placeholder": "Optional"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "At least 8 characters",
+        "error": "Password must contain at least 8 characters."
+      },
+      "branchName": {
+        "label": "Main branch name",
+        "placeholder": "Main branch",
+        "error": "Enter the name of your main branch."
+      },
+      "branchAddress": {
+        "label": "Main branch address",
+        "placeholder": "Street, city, state",
+        "error": "Enter the address of your main branch."
+      }
+    },
+    "submit": "Pay license",
+    "submitting": "Preparing payment...",
+    "selectedPlan": "Selected plan",
+    "paymentStatus": {
+      "title": "Payment status",
+      "description": "Payment is processed with Mercado Pago. Your account is activated automatically when the payment is approved."
+    },
+    "next": {
+      "title": "What happens next",
+      "one": "1. You confirm the secure payment in Mercado Pago.",
+      "two": "2. If payment is approved, your company and main branch are created.",
+      "three": "3. You enter the workspace automatically."
+    },
+    "paymentReturn": {
+      "checking": "We are checking your payment status...",
+      "pending": "Your payment is pending. When Mercado Pago approves it, your account will be activated.",
+      "rejected": "Your payment was rejected. You can review the details and try again.",
+      "error": "We could not verify the payment.",
+      "redirectError": "We could not open Mercado Pago checkout."
+    },
+    "toast": {
+      "success": "Your workspace is ready. Welcome to Garfix.",
+      "genericError": "It was not possible to create the account.",
+      "unexpectedError": "Unexpected error while creating the account."
+    },
+    "return": {
+      "checking": {
+        "badge": "Checking",
+        "title": "Verifying your payment",
+        "description": "We're confirming your payment status with Mercado Pago. This only takes a few seconds…"
+      },
+      "success": {
+        "badge": "Payment approved",
+        "title": "You're all set! Your account is active",
+        "description": "We created your company and main branch. Taking you to your dashboard in a moment.",
+        "signingIn": "Signing you in automatically…",
+        "cta": "Go to my dashboard"
+      },
+      "pending": {
+        "badge": "Payment pending",
+        "title": "Your payment is being processed",
+        "description": "Mercado Pago hasn't confirmed the payment yet. As soon as it's approved we'll activate your account and you can sign in.",
+        "checking": "Checking status…",
+        "autoRetry": "We'll retry automatically in {{seconds}}s",
+        "checkNow": "Check again",
+        "backHome": "Back to home"
+      },
+      "rejected": {
+        "badge": "Payment rejected",
+        "title": "We couldn't process your payment",
+        "description": "The payment was rejected by Mercado Pago and no charge was made. You can review your details and try again.",
+        "retry": "Retry payment",
+        "backHome": "Back to home"
+      },
+      "error": {
+        "badge": "Something went wrong",
+        "title": "We couldn't verify your payment",
+        "description": "There was a problem checking your payment status. Wait a moment and try again.",
+        "retry": "Check again",
+        "backHome": "Back to home"
+      },
+      "summary": {
+        "plan": "Plan",
+        "amount": "Total"
+      },
+      "toastApproved": "Payment approved! Signing you in…",
+      "payAgain": "Try the payment again"
+    },
+    "redirecting": "Redirecting to Mercado Pago…"
+  },
+  "footer": {
+    "tagline": "The platform to manage your service shop from end to end.",
+    "product": "Product",
+    "rights": "All rights reserved."
+  }
+}

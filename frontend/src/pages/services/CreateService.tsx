@@ -23,7 +23,9 @@ import type {
   ServiceFormData,
 } from './service.types'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { ServiceQrModal } from '@/components/services/ServiceQrModal'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 
 const emptyCatalogs: ServiceCatalogsResponse = {
   clients: [],
@@ -65,6 +67,8 @@ const mapServiceDetailToFormData = (
     serialNumber: device.serialNumber || '',
     color: device.color || '',
     appearance: device.appearance || '',
+    unlockType: device.unlockType || '',
+    unlockCode: device.unlockCode || '',
     problem: device.problem || '',
     solution: device.solution || '',
     cost: String(device.cost ?? 0),
@@ -84,17 +88,30 @@ const mapServiceDetailToFormData = (
   },
 })
 
-export const CreateService: React.FC = () => {
+interface CreateServiceProps {
+  serviceRequestId?: string
+  embedded?: boolean
+  onSaved?: () => void
+}
+
+export const CreateService: React.FC<CreateServiceProps> = ({
+  serviceRequestId,
+  embedded = false,
+  onSaved,
+}) => {
   const { t } = useTranslation(['common', 'services'])
   const navigate = useNavigate()
-  const { id: serviceRequestId } = useParams<{ id: string }>()
-  const isEditMode = Boolean(serviceRequestId)
+  const activeBranchId = useActiveBranchId()
+  const { id: routeServiceRequestId } = useParams<{ id: string }>()
+  const resolvedServiceRequestId = serviceRequestId ?? routeServiceRequestId
+  const isEditMode = Boolean(resolvedServiceRequestId)
   const [currenStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true)
   const [success, setSuccess] = useState(false)
   const [createdCode, setCreatedCode] = useState('')
   const [createdQrCode, setCreatedQrCode] = useState('')
+  const [createdId, setCreatedId] = useState<number | null>(null)
   const [isQrModalOpen, setIsQrModalOpen] = useState(false)
   const [catalogs, setCatalogs] = useState<ServiceCatalogsResponse>(emptyCatalogs)
   const [formData, setFormData] = useState<ServiceFormData>(buildInitialFormData)
@@ -107,38 +124,60 @@ export const CreateService: React.FC = () => {
   ]
 
   useEffect(() => {
+    if (!activeBranchId) {
+      return
+    }
+
+    let isCancelled = false
+
     const loadCatalogs = async () => {
+      setIsLoadingCatalogs(true)
       try {
         const data = await getServiceCatalogs()
-        setCatalogs(data)
+        if (isCancelled) return
 
-        if (isEditMode && serviceRequestId) {
-          const serviceDetail = await getServiceById(serviceRequestId)
+        setCatalogs(data)
+        setCurrentStep(0)
+        setSuccess(false)
+        setCreatedCode('')
+        setCreatedQrCode('')
+        setIsQrModalOpen(false)
+
+        if (isEditMode && resolvedServiceRequestId) {
+          const serviceDetail = await getServiceById(resolvedServiceRequestId)
+          if (isCancelled) return
           setFormData(mapServiceDetailToFormData(serviceDetail))
           return
         }
 
-        setFormData((prev) => ({
-          ...prev,
+        setFormData({
+          ...buildInitialFormData(),
           serviceDetails: {
-            ...prev.serviceDetails,
-            branchId: prev.serviceDetails.branchId || data.branches[0]?.id || '',
-            statusId: prev.serviceDetails.statusId || data.statuses[0]?.id || '',
+            ...buildInitialFormData().serviceDetails,
+            branchId: data.branches[0]?.id || '',
+            statusId: data.statuses[0]?.id || '',
           },
-        }))
+        })
       } catch (error) {
+        if (isCancelled) return
         console.error(error)
-        toast.error('No fue posible cargar la información del servicio')
-        if (isEditMode) {
+        toast.error(getApiErrorMessage(error, 'No fue posible cargar la información del servicio'))
+        if (isEditMode && !embedded) {
           navigate('/services/list')
         }
       } finally {
-        setIsLoadingCatalogs(false)
+        if (!isCancelled) {
+          setIsLoadingCatalogs(false)
+        }
       }
     }
 
-    loadCatalogs()
-  }, [isEditMode, navigate, serviceRequestId])
+    void loadCatalogs()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [activeBranchId, embedded, isEditMode, navigate, resolvedServiceRequestId])
 
   const nextSetp = () => {
     setCurrentStep(currenStep + 1)
@@ -160,6 +199,8 @@ export const CreateService: React.FC = () => {
               ...formData.newClient,
               email: formData.newClient.email || null,
               address: formData.newClient.address || null,
+              typeClientId: formData.newClient.typeClientId || null,
+              documentTypeId: formData.newClient.documentTypeId || null,
             }
           : null,
       devices: formData.devices.map((device) => ({
@@ -169,6 +210,8 @@ export const CreateService: React.FC = () => {
         serialNumber: device.serialNumber.trim() || null,
         color: device.color.trim() || null,
         appearance: device.appearance.trim() || null,
+        unlockType: device.unlockType.trim() || null,
+        unlockCode: device.unlockCode.trim() || null,
         problem: device.problem.trim(),
         solution: device.solution.trim() || null,
         cost: Number(device.cost || 0),
@@ -198,12 +241,23 @@ export const CreateService: React.FC = () => {
     setIsSubmitting(true)
     try {
       const response =
-        isEditMode && serviceRequestId
-          ? await updateService(serviceRequestId, payload)
+        isEditMode && resolvedServiceRequestId
+          ? await updateService(resolvedServiceRequestId, payload)
           : await createService(payload)
+
+      if (embedded) {
+        toast.success(
+          isEditMode
+            ? t('services:updateSuccess')
+            : 'Servicio guardado correctamente'
+        )
+        onSaved?.()
+        return
+      }
 
       setCreatedCode(response.code ?? '')
       setCreatedQrCode(response.qrCode ?? '')
+      setCreatedId(response.id ?? null)
       setSuccess(true)
       if (response.qrCode) {
         setIsQrModalOpen(true)
@@ -216,9 +270,10 @@ export const CreateService: React.FC = () => {
     } catch (error) {
       console.error(error)
       toast.error(
-        isEditMode
-          ? t('services:updateError')
-          : 'No fue posible guardar el servicio'
+        getApiErrorMessage(
+          error,
+          isEditMode ? t('services:updateError') : 'No fue posible guardar el servicio'
+        )
       )
     } finally {
       setIsSubmitting(false)
@@ -272,8 +327,8 @@ export const CreateService: React.FC = () => {
   }
   return (
     <>
-      <Toaster />
-      <div className="max-w-8xl pr-20 pl-20">
+      {!embedded && <Toaster />}
+      <div className={embedded ? 'max-h-[72vh] overflow-y-auto pr-1' : 'max-w-8xl pr-20 pl-20'}>
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             {isEditMode ? t('services:editTitle') : t('services:title')}
@@ -315,10 +370,16 @@ export const CreateService: React.FC = () => {
               )}
               <Button
                 variant="primary"
-                onClick={() => navigate('/services/list')}
+                onClick={() => {
+                  if (embedded) {
+                    onSaved?.()
+                    return
+                  }
+                  navigate('/services/list')
+                }}
                 icon={<ClipboardIcon size={18} />}
               >
-                {t('services:finish')}
+                {embedded ? 'Cerrar' : t('services:finish')}
               </Button>
             </div>
           </Card>
@@ -339,6 +400,10 @@ export const CreateService: React.FC = () => {
           onClose={() => setIsQrModalOpen(false)}
           qrCode={createdQrCode}
           serviceCode={createdCode}
+          serviceRequestId={
+            createdId ??
+            (resolvedServiceRequestId ? Number(resolvedServiceRequestId) : undefined)
+          }
         />
       )}
     </>

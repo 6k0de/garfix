@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { CreateServicePayloadSchema } from './service.schema.js'
 import { prisma } from '../../../lib/prisma.js'
 import { ensureDefaultClientCatalogs } from '../../../lib/defaultCatalogs.js'
+import { resolveCompanyScope } from '../../../lib/companyScope.js'
 import {
     compressAndStoreEvidence,
     deleteStoredEvidenceFile,
@@ -15,6 +16,9 @@ import {
     clearEvidenceForServiceIfExpired,
     runEvidenceCleanup,
 } from '../../../lib/evidenceCleanup.js'
+
+const BRANCH_SCOPE_MESSAGE =
+    'Solo puedes acceder y gestionar servicios de la sucursal activa.'
 
 const parseServiceRequestId = (rawId: string) => {
     const parsed = Number(rawId)
@@ -48,6 +52,140 @@ const buildPublicFileUrl = (req: Request, filePath: string) => {
     return `${protocol}://${req.get('host')}${filePath}`
 }
 
+const toUniqueIds = (values: Array<string | null | undefined>) =>
+    Array.from(
+        new Set(
+            values
+                .map((value) => (typeof value === 'string' ? value.trim() : ''))
+                .filter((value) => value.length > 0),
+        ),
+    )
+
+const validateDeviceRelationsWithinCompany = async (
+    companyId: string,
+    devices: Array<{
+        deviceTypeId: string
+        technicianId: string
+        locationId: string
+    }>,
+    branchId: string,
+) => {
+    const deviceTypeIds = toUniqueIds(devices.map((device) => device.deviceTypeId))
+    const technicianIds = toUniqueIds(devices.map((device) => device.technicianId))
+    const locationIds = toUniqueIds(devices.map((device) => device.locationId))
+
+    if (deviceTypeIds.length > 0) {
+        const deviceTypes = await prisma.deviceType.findMany({
+            where: {
+                id: {
+                    in: deviceTypeIds,
+                },
+                branchId,
+                branch: {
+                    companyId,
+                },
+            },
+            select: {
+                id: true,
+            },
+        })
+
+        if (deviceTypes.length !== deviceTypeIds.length) {
+            return {
+                valid: false,
+                message: 'Uno o más tipos de equipo no pertenecen a la sucursal seleccionada.',
+            }
+        }
+    }
+
+    if (technicianIds.length > 0) {
+        const technicians = await prisma.user.findMany({
+            where: {
+                id: {
+                    in: technicianIds,
+                },
+                companyId,
+                branchId,
+            },
+            select: {
+                id: true,
+            },
+        })
+
+        if (technicians.length !== technicianIds.length) {
+            return {
+                valid: false,
+                message: 'Uno o más técnicos no pertenecen a la sucursal seleccionada.',
+            }
+        }
+    }
+
+    if (locationIds.length > 0) {
+        const locations = await prisma.location.findMany({
+            where: {
+                id: {
+                    in: locationIds,
+                },
+                branch: {
+                    companyId,
+                    id: branchId,
+                },
+            },
+            select: {
+                id: true,
+            },
+        })
+
+        if (locations.length !== locationIds.length) {
+            return {
+                valid: false,
+                message: 'Una o más ubicaciones no pertenecen a la sucursal seleccionada.',
+            }
+        }
+    }
+
+    return {
+        valid: true,
+        message: null,
+    }
+}
+
+const validateClientCatalogsForBranch = async (
+    branchId: string,
+    typeClientId?: string | null,
+    documentTypeId?: string | null,
+) => {
+    // El tipo de cliente y el tipo de documento son opcionales: solo se validan
+    // los que realmente se enviaron.
+    const [typeClientExists, documentTypeExists] = await Promise.all([
+        typeClientId
+            ? prisma.typeClient.findFirst({
+                  where: { id: typeClientId, branchId },
+                  select: { id: true },
+              })
+            : Promise.resolve(true),
+        documentTypeId
+            ? prisma.documentType.findFirst({
+                  where: { id: documentTypeId, branchId },
+                  select: { id: true },
+              })
+            : Promise.resolve(true),
+    ])
+
+    if (!typeClientExists || !documentTypeExists) {
+        return {
+            valid: false,
+            message:
+                'El tipo de cliente o tipo de documento del cliente no pertenece a la sucursal seleccionada.',
+        }
+    }
+
+    return {
+        valid: true,
+        message: null,
+    }
+}
+
 export const createService = async (req: Request, res: Response) => {
     const parsed = CreateServicePayloadSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -57,6 +195,37 @@ export const createService = async (req: Request, res: Response) => {
     }
 
     const { clientId, newClient, devices, serviceDetails } = parsed.data
+    const scope = await resolveCompanyScope(req)
+    if (!scope) {
+        return res.status(401).json({
+            error: 'No autorizado',
+            message: 'Debes iniciar sesión para crear servicios.',
+        })
+    }
+
+    if (scope.isTechnician && !scope.branchId) {
+        return res.status(403).json({
+            error: 'Acceso denegado',
+            message: BRANCH_SCOPE_MESSAGE,
+        })
+    }
+
+    if (scope.branchId && serviceDetails.branchId !== scope.branchId) {
+        return res.status(403).json({
+            error: 'Acceso denegado',
+            message: BRANCH_SCOPE_MESSAGE,
+        })
+    }
+
+    if (newClient && newClient.branchId !== serviceDetails.branchId) {
+        return res.status(400).json({
+            error: 'Relación inválida',
+            message:
+                'La sucursal del cliente nuevo debe coincidir con la sucursal del servicio.',
+        })
+    }
+
+    const companyId = scope.companyId
 
     const receptionDate = new Date(serviceDetails.receptionDate)
     if (Number.isNaN(receptionDate.getTime())) {
@@ -67,19 +236,43 @@ export const createService = async (req: Request, res: Response) => {
     }
 
     try {
-        const [branchExists, statusExists, existingClient] = await Promise.all([
-            prisma.branch.findUnique({
-                where: { id: serviceDetails.branchId },
+        const [branchExists, statusExists, existingClient, newClientBranch] = await Promise.all([
+            prisma.branch.findFirst({
+                where: {
+                    id: serviceDetails.branchId,
+                    companyId,
+                    ...(scope.branchId ? { id: scope.branchId } : {}),
+                },
                 select: { id: true },
             }),
-            prisma.status.findUnique({
-                where: { id: serviceDetails.statusId },
+            prisma.status.findFirst({
+                where: {
+                    id: serviceDetails.statusId,
+                    branchId: serviceDetails.branchId,
+                },
                 select: { id: true },
             }),
             clientId
-                ? prisma.client.findUnique({
-                      where: { id: clientId },
+                ? prisma.client.findFirst({
+                      where: {
+                          id: clientId,
+                          branchId: serviceDetails.branchId,
+                          branch: {
+                              companyId,
+                          },
+                      },
                       select: { id: true },
+                  })
+                : Promise.resolve(null),
+            newClient?.branchId
+                ? prisma.branch.findFirst({
+                      where: {
+                          id: newClient.branchId,
+                          companyId,
+                      },
+                      select: {
+                          id: true,
+                      },
                   })
                 : Promise.resolve(null),
         ])
@@ -101,7 +294,40 @@ export const createService = async (req: Request, res: Response) => {
         if (clientId && !existingClient) {
             return res.status(400).json({
                 error: 'Relación inválida',
-                message: 'El cliente seleccionado no existe.',
+                message: 'El cliente seleccionado no existe o no pertenece a tu empresa.',
+            })
+        }
+
+        if (newClient?.branchId && !newClientBranch) {
+            return res.status(400).json({
+                error: 'Relación inválida',
+                message: 'La sucursal del nuevo cliente no pertenece a tu empresa.',
+            })
+        }
+
+        if (newClient) {
+            const catalogValidation = await validateClientCatalogsForBranch(
+                newClient.branchId,
+                newClient.typeClientId,
+                newClient.documentTypeId,
+            )
+            if (!catalogValidation.valid) {
+                return res.status(400).json({
+                    error: 'Relación inválida',
+                    message: catalogValidation.message,
+                })
+            }
+        }
+
+        const validation = await validateDeviceRelationsWithinCompany(
+            companyId,
+            devices,
+            serviceDetails.branchId,
+        )
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: 'Relación inválida',
+                message: validation.message,
             })
         }
 
@@ -115,8 +341,8 @@ export const createService = async (req: Request, res: Response) => {
                         phone: newClient.phone.trim(),
                         email: newClient.email?.trim() ?? '',
                         address: newClient.address?.trim() ?? '',
-                        typeClientId: newClient.typeClientId,
-                        documentTypeId: newClient.documentTypeId,
+                        typeClientId: newClient.typeClientId || null,
+                        documentTypeId: newClient.documentTypeId || null,
                         branchId: newClient.branchId,
                     },
                     select: { id: true },
@@ -173,6 +399,8 @@ export const createService = async (req: Request, res: Response) => {
                             imei: device.serialNumber?.trim() ?? '',
                             color: device.color?.trim() ?? '',
                             appearance: device.appearance?.trim() ?? '',
+                            unlockType: device.unlockType?.trim() ?? '',
+                            unlockCode: device.unlockCode?.trim() ?? '',
                             serviceDetail: device.problem.trim(),
                             serviceSolution: device.solution?.trim() ?? '',
                             cost: device.cost,
@@ -217,7 +445,6 @@ export const createService = async (req: Request, res: Response) => {
                 return res.status(409).json({
                     error: 'Conflicto',
                     message: 'Ya existe una solicitud con el folio o QR indicado.',
-                    meta: error.meta,
                 })
             }
             if (error.code === 'P2003') {
@@ -225,7 +452,6 @@ export const createService = async (req: Request, res: Response) => {
                     error: 'Relación inválida',
                     message:
                         'Alguna relación enviada no existe (cliente, técnico, ubicación, estatus, sucursal o tipo de equipo).',
-                    meta: error.meta,
                 })
             }
         }
@@ -235,9 +461,27 @@ export const createService = async (req: Request, res: Response) => {
     }
 }
 
-export const getAllServices = async (_: Request, res: Response) => {
+export const getAllServices = async (req: Request, res: Response) => {
     try {
+        const scope = await resolveCompanyScope(req)
+        if (!scope) {
+            return res.status(401).json({
+                error: 'No autorizado',
+                message: 'Debes iniciar sesión para consultar servicios.',
+            })
+        }
+
+        if (scope.isTechnician && !scope.branchId) {
+            return res.status(200).json([])
+        }
+
         const serviceRequests = await prisma.serviceRequest.findMany({
+            where: {
+                branch: {
+                    companyId: scope.companyId,
+                    ...(scope.branchId ? { id: scope.branchId } : {}),
+                },
+            },
             orderBy: {
                 createdAt: 'desc',
             },
@@ -262,6 +506,7 @@ export const getAllServices = async (_: Request, res: Response) => {
                     select: {
                         id: true,
                         name: true,
+                        colorHex: true,
                     },
                 },
                 services: {
@@ -294,6 +539,7 @@ export const getAllServices = async (_: Request, res: Response) => {
                 client: serviceRequest.client.name,
                 branch: serviceRequest.branch.name,
                 status: serviceRequest.status.name,
+                statusColor: serviceRequest.status.colorHex,
                 device: firstService
                     ? `${firstService.brand} ${firstService.model}`.trim()
                     : 'Sin dispositivo',
@@ -307,7 +553,6 @@ export const getAllServices = async (_: Request, res: Response) => {
         console.error('Error obteniendo servicios:', error)
         return res.status(500).json({
             error: 'Error al obtener servicios',
-            details: error instanceof Error ? error.message : error,
         })
     }
 }
@@ -319,8 +564,29 @@ export const getServiceById = async (req: Request, res: Response) => {
     }
 
     try {
-        const serviceRequest = await prisma.serviceRequest.findUnique({
-            where: { id: serviceRequestId },
+        const scope = await resolveCompanyScope(req)
+        if (!scope) {
+            return res.status(401).json({
+                error: 'No autorizado',
+                message: 'Debes iniciar sesión para consultar servicios.',
+            })
+        }
+
+        if (scope.isTechnician && !scope.branchId) {
+            return res.status(403).json({
+                error: 'Acceso denegado',
+                message: BRANCH_SCOPE_MESSAGE,
+            })
+        }
+
+        const serviceRequest = await prisma.serviceRequest.findFirst({
+            where: {
+                id: serviceRequestId,
+                branch: {
+                    companyId: scope.companyId,
+                    ...(scope.branchId ? { id: scope.branchId } : {}),
+                },
+            },
             select: {
                 id: true,
                 code: true,
@@ -351,6 +617,8 @@ export const getServiceById = async (req: Request, res: Response) => {
                         imei: true,
                         color: true,
                         appearance: true,
+                        unlockType: true,
+                        unlockCode: true,
                         serviceDetail: true,
                         serviceSolution: true,
                         cost: true,
@@ -359,6 +627,25 @@ export const getServiceById = async (req: Request, res: Response) => {
                         locationId: true,
                         deliveryDate: true,
                         deliveryTime: true,
+                    },
+                },
+                cancellation: {
+                    select: {
+                        id: true,
+                        statusId: true,
+                        total: true,
+                        totalPaid: true,
+                        debt: true,
+                        amount: true,
+                        hasRefund: true,
+                        refundMethod: true,
+                        cashFromBox: true,
+                        bankAccount: true,
+                        bankFromBox: true,
+                        sourceBoxName: true,
+                        notes: true,
+                        createdAt: true,
+                        updatedAt: true,
                     },
                 },
             },
@@ -379,6 +666,8 @@ export const getServiceById = async (req: Request, res: Response) => {
                 serialNumber: device.imei,
                 color: device.color,
                 appearance: device.appearance,
+                unlockType: device.unlockType,
+                unlockCode: device.unlockCode,
                 problem: device.serviceDetail,
                 solution: device.serviceSolution,
                 cost: device.cost,
@@ -396,6 +685,25 @@ export const getServiceById = async (req: Request, res: Response) => {
                 code: serviceRequest.code,
                 qrCode: serviceRequest.qrCode,
             },
+            cancellation: serviceRequest.cancellation
+                ? {
+                      id: serviceRequest.cancellation.id,
+                      statusId: serviceRequest.cancellation.statusId,
+                      total: serviceRequest.cancellation.total,
+                      totalPaid: serviceRequest.cancellation.totalPaid,
+                      debt: serviceRequest.cancellation.debt,
+                      amount: serviceRequest.cancellation.amount,
+                      hasRefund: serviceRequest.cancellation.hasRefund,
+                      refundMethod: serviceRequest.cancellation.refundMethod,
+                      cashFromBox: serviceRequest.cancellation.cashFromBox,
+                      bankAccount: serviceRequest.cancellation.bankAccount,
+                      bankFromBox: serviceRequest.cancellation.bankFromBox,
+                      sourceBoxName: serviceRequest.cancellation.sourceBoxName,
+                      notes: serviceRequest.cancellation.notes,
+                      createdAt: serviceRequest.cancellation.createdAt,
+                      updatedAt: serviceRequest.cancellation.updatedAt,
+                  }
+                : null,
         }
 
         return res.status(200).json(result)
@@ -403,7 +711,6 @@ export const getServiceById = async (req: Request, res: Response) => {
         console.error('Error obteniendo detalle del servicio:', error)
         return res.status(500).json({
             error: 'Error al obtener detalle del servicio',
-            details: error instanceof Error ? error.message : error,
         })
     }
 }
@@ -421,7 +728,38 @@ export const updateService = async (req: Request, res: Response) => {
             .json({ error: 'Datos invalidos', details: parsed.error.issues })
     }
 
-    const { clientId, newClient, devices, serviceDetails } = parsed.data
+    const { clientId, newClient, devices, serviceDetails, cancellation } = parsed.data
+    const scope = await resolveCompanyScope(req)
+    if (!scope) {
+        return res.status(401).json({
+            error: 'No autorizado',
+            message: 'Debes iniciar sesión para actualizar servicios.',
+        })
+    }
+
+    if (scope.isTechnician && !scope.branchId) {
+        return res.status(403).json({
+            error: 'Acceso denegado',
+            message: BRANCH_SCOPE_MESSAGE,
+        })
+    }
+
+    if (scope.branchId && serviceDetails.branchId !== scope.branchId) {
+        return res.status(403).json({
+            error: 'Acceso denegado',
+            message: BRANCH_SCOPE_MESSAGE,
+        })
+    }
+
+    if (newClient && newClient.branchId !== serviceDetails.branchId) {
+        return res.status(400).json({
+            error: 'Relación inválida',
+            message:
+                'La sucursal del cliente nuevo debe coincidir con la sucursal del servicio.',
+        })
+    }
+
+    const companyId = scope.companyId
     const receptionDate = new Date(serviceDetails.receptionDate)
     if (Number.isNaN(receptionDate.getTime())) {
         return res.status(400).json({
@@ -431,10 +769,16 @@ export const updateService = async (req: Request, res: Response) => {
     }
 
     try {
-        const [existingServiceRequest, branchExists, statusExists, existingClient] =
+        const [existingServiceRequest, branchExists, statusExists, existingClient, newClientBranch] =
             await Promise.all([
-                prisma.serviceRequest.findUnique({
-                    where: { id: serviceRequestId },
+                prisma.serviceRequest.findFirst({
+                    where: {
+                        id: serviceRequestId,
+                        branch: {
+                            companyId,
+                            ...(scope.branchId ? { id: scope.branchId } : {}),
+                        },
+                    },
                     select: {
                         id: true,
                         code: true,
@@ -442,18 +786,42 @@ export const updateService = async (req: Request, res: Response) => {
                         statusId: true,
                     },
                 }),
-                prisma.branch.findUnique({
-                    where: { id: serviceDetails.branchId },
+                prisma.branch.findFirst({
+                    where: {
+                        id: serviceDetails.branchId,
+                        companyId,
+                        ...(scope.branchId ? { id: scope.branchId } : {}),
+                    },
                     select: { id: true },
                 }),
-                prisma.status.findUnique({
-                    where: { id: serviceDetails.statusId },
+                prisma.status.findFirst({
+                    where: {
+                        id: serviceDetails.statusId,
+                        branchId: serviceDetails.branchId,
+                    },
                     select: { id: true },
                 }),
                 clientId
-                    ? prisma.client.findUnique({
-                          where: { id: clientId },
+                    ? prisma.client.findFirst({
+                          where: {
+                              id: clientId,
+                              branchId: serviceDetails.branchId,
+                              branch: {
+                                  companyId,
+                              },
+                          },
                           select: { id: true },
+                      })
+                    : Promise.resolve(null),
+                newClient?.branchId
+                    ? prisma.branch.findFirst({
+                          where: {
+                              id: newClient.branchId,
+                              companyId,
+                          },
+                          select: {
+                              id: true,
+                          },
                       })
                     : Promise.resolve(null),
             ])
@@ -479,7 +847,40 @@ export const updateService = async (req: Request, res: Response) => {
         if (clientId && !existingClient) {
             return res.status(400).json({
                 error: 'Relación inválida',
-                message: 'El cliente seleccionado no existe.',
+                message: 'El cliente seleccionado no existe o no pertenece a tu empresa.',
+            })
+        }
+
+        if (newClient?.branchId && !newClientBranch) {
+            return res.status(400).json({
+                error: 'Relación inválida',
+                message: 'La sucursal del nuevo cliente no pertenece a tu empresa.',
+            })
+        }
+
+        if (newClient) {
+            const catalogValidation = await validateClientCatalogsForBranch(
+                newClient.branchId,
+                newClient.typeClientId,
+                newClient.documentTypeId,
+            )
+            if (!catalogValidation.valid) {
+                return res.status(400).json({
+                    error: 'Relación inválida',
+                    message: catalogValidation.message,
+                })
+            }
+        }
+
+        const validation = await validateDeviceRelationsWithinCompany(
+            companyId,
+            devices,
+            serviceDetails.branchId,
+        )
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: 'Relación inválida',
+                message: validation.message,
             })
         }
 
@@ -493,8 +894,8 @@ export const updateService = async (req: Request, res: Response) => {
                         phone: newClient.phone.trim(),
                         email: newClient.email?.trim() ?? '',
                         address: newClient.address?.trim() ?? '',
-                        typeClientId: newClient.typeClientId,
-                        documentTypeId: newClient.documentTypeId,
+                        typeClientId: newClient.typeClientId || null,
+                        documentTypeId: newClient.documentTypeId || null,
                         branchId: newClient.branchId,
                     },
                     select: { id: true },
@@ -541,6 +942,8 @@ export const updateService = async (req: Request, res: Response) => {
                             imei: device.serialNumber?.trim() ?? '',
                             color: device.color?.trim() ?? '',
                             appearance: device.appearance?.trim() ?? '',
+                            unlockType: device.unlockType?.trim() ?? '',
+                            unlockCode: device.unlockCode?.trim() ?? '',
                             serviceDetail: device.problem.trim(),
                             serviceSolution: device.solution?.trim() ?? '',
                             cost: device.cost,
@@ -567,6 +970,66 @@ export const updateService = async (req: Request, res: Response) => {
                 })
             }
 
+            if (cancellation) {
+                const hasRefund = cancellation.hasRefund
+                const refundMethod = hasRefund ? (cancellation.refundMethod ?? null) : null
+                const fromBox =
+                    refundMethod === 'CASH'
+                        ? cancellation.cashFromBox
+                        : refundMethod === 'BANK'
+                          ? cancellation.bankFromBox
+                          : null
+
+                await tx.serviceCancellation.upsert({
+                    where: { serviceRequestId },
+                    create: {
+                        serviceRequestId,
+                        statusId: serviceDetails.statusId,
+                        total: cancellation.total,
+                        totalPaid: cancellation.totalPaid,
+                        debt: cancellation.debt,
+                        amount: cancellation.amount,
+                        hasRefund,
+                        refundMethod,
+                        cashFromBox:
+                            refundMethod === 'CASH' ? (cancellation.cashFromBox ?? null) : null,
+                        bankAccount:
+                            refundMethod === 'BANK'
+                                ? (cancellation.bankAccount?.trim() || null)
+                                : null,
+                        bankFromBox:
+                            refundMethod === 'BANK' ? (cancellation.bankFromBox ?? null) : null,
+                        sourceBoxName:
+                            fromBox === true
+                                ? (cancellation.sourceBoxName?.trim() || null)
+                                : null,
+                        notes: cancellation.notes?.trim() || null,
+                    },
+                    update: {
+                        statusId: serviceDetails.statusId,
+                        total: cancellation.total,
+                        totalPaid: cancellation.totalPaid,
+                        debt: cancellation.debt,
+                        amount: cancellation.amount,
+                        hasRefund,
+                        refundMethod,
+                        cashFromBox:
+                            refundMethod === 'CASH' ? (cancellation.cashFromBox ?? null) : null,
+                        bankAccount:
+                            refundMethod === 'BANK'
+                                ? (cancellation.bankAccount?.trim() || null)
+                                : null,
+                        bankFromBox:
+                            refundMethod === 'BANK' ? (cancellation.bankFromBox ?? null) : null,
+                        sourceBoxName:
+                            fromBox === true
+                                ? (cancellation.sourceBoxName?.trim() || null)
+                                : null,
+                        notes: cancellation.notes?.trim() || null,
+                    },
+                })
+            }
+
             return {
                 id: serviceRequestId,
                 code: nextCode,
@@ -587,7 +1050,6 @@ export const updateService = async (req: Request, res: Response) => {
                 return res.status(409).json({
                     error: 'Conflicto',
                     message: 'Ya existe una solicitud con el folio o QR indicado.',
-                    meta: error.meta,
                 })
             }
             if (error.code === 'P2003') {
@@ -595,7 +1057,6 @@ export const updateService = async (req: Request, res: Response) => {
                     error: 'Relación inválida',
                     message:
                         'Alguna relación enviada no existe (cliente, técnico, ubicación, estatus, sucursal o tipo de equipo).',
-                    meta: error.meta,
                 })
             }
         }
@@ -626,6 +1087,7 @@ export const getServiceEvidenceByQr = async (req: Request, res: Response) => {
                     select: {
                         id: true,
                         name: true,
+                        colorHex: true,
                     },
                 },
                 branch: {
@@ -809,9 +1271,410 @@ export const uploadServiceEvidenceByQr = async (req: Request, res: Response) => 
     }
 }
 
-export const getServiceCatalogs = async (_: Request, res: Response) => {
+const buildEmptyOverview = (branch: { id: string; name: string } | null) => ({
+    branch,
+    summary: {
+        totalRequests: 0,
+        totalDevices: 0,
+        totalQuoted: 0,
+        totalCollected: 0,
+        totalPending: 0,
+        clientsCount: 0,
+        requestsThisMonth: 0,
+        collectedThisMonth: 0,
+        quotedThisMonth: 0,
+    },
+    statusBreakdown: [] as Array<{
+        id: string
+        name: string
+        colorHex: string
+        count: number
+    }>,
+    recentRequests: [] as Array<{
+        id: number
+        code: string
+        client: string
+        device: string
+        devicesCount: number
+        status: string
+        statusColor: string
+        receptionDate: Date
+        total: number
+    }>,
+    topTechnicians: [] as Array<{
+        id: string
+        name: string
+        devices: number
+        collected: number
+    }>,
+    monthlyTrend: [] as Array<{ month: string; label: string; count: number }>,
+})
+
+const MONTH_LABELS_ES = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
+]
+
+export const getCompanyOverview = async (req: Request, res: Response) => {
     try {
-        await ensureDefaultClientCatalogs()
+        const scope = await resolveCompanyScope(req)
+        if (!scope) {
+            return res.status(401).json({
+                error: 'No autorizado',
+                message: 'Debes iniciar sesión para consultar el resumen.',
+            })
+        }
+
+        // Un técnico sin sucursal activa no tiene datos que mostrar.
+        if (scope.isTechnician && !scope.branchId) {
+            return res.status(200).json(buildEmptyOverview(null))
+        }
+
+        const branchFilter = {
+            companyId: scope.companyId,
+            ...(scope.branchId ? { id: scope.branchId } : {}),
+        }
+        const requestWhere = { branch: branchFilter }
+        const serviceWhere = { serviceRequest: { branch: branchFilter } }
+
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        const startOfTrend = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+
+        const activeBranch = scope.branchId
+            ? await prisma.branch.findFirst({
+                  where: { id: scope.branchId, companyId: scope.companyId },
+                  select: { id: true, name: true },
+              })
+            : null
+
+        const [
+            totalRequests,
+            serviceTotals,
+            statusGroups,
+            recentRequestsRaw,
+            clientsCount,
+            requestsThisMonth,
+            monthTotals,
+            technicianGroups,
+            trendRequests,
+        ] = await Promise.all([
+            prisma.serviceRequest.count({ where: requestWhere }),
+            prisma.service.aggregate({
+                where: serviceWhere,
+                _sum: { cost: true, advance: true },
+                _count: { _all: true },
+            }),
+            prisma.serviceRequest.groupBy({
+                by: ['statusId'],
+                where: requestWhere,
+                _count: { _all: true },
+            }),
+            prisma.serviceRequest.findMany({
+                where: requestWhere,
+                orderBy: { createdAt: 'desc' },
+                take: 6,
+                select: {
+                    id: true,
+                    code: true,
+                    receptionDate: true,
+                    client: { select: { name: true } },
+                    status: { select: { name: true, colorHex: true } },
+                    services: {
+                        orderBy: { id: 'asc' },
+                        select: { brand: true, model: true, cost: true },
+                    },
+                },
+            }),
+            prisma.client.count({ where: { branch: branchFilter } }),
+            prisma.serviceRequest.count({
+                where: { ...requestWhere, createdAt: { gte: startOfMonth } },
+            }),
+            prisma.service.aggregate({
+                where: {
+                    serviceRequest: {
+                        branch: branchFilter,
+                        createdAt: { gte: startOfMonth },
+                    },
+                },
+                _sum: { cost: true, advance: true },
+            }),
+            prisma.service.groupBy({
+                by: ['technicianId'],
+                where: serviceWhere,
+                _count: { _all: true },
+                _sum: { advance: true },
+            }),
+            prisma.serviceRequest.findMany({
+                where: { ...requestWhere, createdAt: { gte: startOfTrend } },
+                select: { createdAt: true },
+            }),
+        ])
+
+        const totalQuoted = serviceTotals._sum.cost ?? 0
+        const totalCollected = serviceTotals._sum.advance ?? 0
+        const quotedThisMonth = monthTotals._sum.cost ?? 0
+        const collectedThisMonth = monthTotals._sum.advance ?? 0
+
+        // Desglose por estatus (nombre + color) ordenado por cantidad.
+        const statusIds = statusGroups.map((group) => group.statusId)
+        const statuses = statusIds.length
+            ? await prisma.status.findMany({
+                  where: { id: { in: statusIds } },
+                  select: { id: true, name: true, colorHex: true },
+              })
+            : []
+        const statusById = new Map(statuses.map((status) => [status.id, status]))
+        const statusBreakdown = statusGroups
+            .map((group) => {
+                const status = statusById.get(group.statusId)
+                return {
+                    id: group.statusId,
+                    name: status?.name ?? 'Sin estatus',
+                    colorHex: status?.colorHex ?? '#64748B',
+                    count: group._count._all,
+                }
+            })
+            .sort((a, b) => b.count - a.count)
+
+        // Órdenes recientes con su total cotizado.
+        const recentRequests = recentRequestsRaw.map((request) => {
+            const first = request.services[0]
+            const total = request.services.reduce(
+                (sum, service) => sum + (service.cost ?? 0),
+                0,
+            )
+            return {
+                id: request.id,
+                code: request.code,
+                client: request.client.name,
+                device: first ? `${first.brand} ${first.model}`.trim() : 'Sin dispositivo',
+                devicesCount: request.services.length,
+                status: request.status.name,
+                statusColor: request.status.colorHex,
+                receptionDate: request.receptionDate,
+                total,
+            }
+        })
+
+        // Técnicos con más equipos atendidos.
+        const sortedTechnicians = [...technicianGroups]
+            .sort((a, b) => b._count._all - a._count._all)
+            .slice(0, 5)
+        const technicianIds = sortedTechnicians.map((group) => group.technicianId)
+        const technicians = technicianIds.length
+            ? await prisma.user.findMany({
+                  where: { id: { in: technicianIds } },
+                  select: { id: true, name: true },
+              })
+            : []
+        const technicianById = new Map(technicians.map((tech) => [tech.id, tech]))
+        const topTechnicians = sortedTechnicians.map((group) => ({
+            id: group.technicianId,
+            name: technicianById.get(group.technicianId)?.name ?? 'Sin técnico',
+            devices: group._count._all,
+            collected: group._sum.advance ?? 0,
+        }))
+
+        // Tendencia de los últimos 6 meses (incluye el mes actual).
+        const trendBuckets: Array<{ month: string; label: string; count: number }> = []
+        const trendIndex = new Map<string, number>()
+        for (let offset = 5; offset >= 0; offset -= 1) {
+            const date = new Date(now.getFullYear(), now.getMonth() - offset, 1)
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+            trendIndex.set(key, trendBuckets.length)
+            trendBuckets.push({
+                month: key,
+                label: MONTH_LABELS_ES[date.getMonth()],
+                count: 0,
+            })
+        }
+        for (const request of trendRequests) {
+            const created = new Date(request.createdAt)
+            const key = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}`
+            const index = trendIndex.get(key)
+            if (index !== undefined) {
+                trendBuckets[index].count += 1
+            }
+        }
+
+        return res.status(200).json({
+            branch: activeBranch,
+            summary: {
+                totalRequests,
+                totalDevices: serviceTotals._count._all,
+                totalQuoted,
+                totalCollected,
+                totalPending: Math.max(totalQuoted - totalCollected, 0),
+                clientsCount,
+                requestsThisMonth,
+                collectedThisMonth,
+                quotedThisMonth,
+            },
+            statusBreakdown,
+            recentRequests,
+            topTechnicians,
+            monthlyTrend: trendBuckets,
+        })
+    } catch (error) {
+        console.error('Error obteniendo resumen del negocio:', error)
+        return res.status(500).json({
+            error: 'Error al obtener el resumen del negocio',
+        })
+    }
+}
+
+export const getServiceTicket = async (req: Request, res: Response) => {
+    const serviceRequestId = parseServiceRequestId(req.params.id)
+    if (!serviceRequestId) {
+        return res.status(400).json({ error: 'El id del servicio es inválido' })
+    }
+
+    try {
+        const scope = await resolveCompanyScope(req)
+        if (!scope) {
+            return res.status(401).json({
+                error: 'No autorizado',
+                message: 'Debes iniciar sesión para generar el ticket.',
+            })
+        }
+
+        if (scope.isTechnician && !scope.branchId) {
+            return res.status(403).json({
+                error: 'Acceso denegado',
+                message: BRANCH_SCOPE_MESSAGE,
+            })
+        }
+
+        const serviceRequest = await prisma.serviceRequest.findFirst({
+            where: {
+                id: serviceRequestId,
+                branch: {
+                    companyId: scope.companyId,
+                    ...(scope.branchId ? { id: scope.branchId } : {}),
+                },
+            },
+            select: {
+                id: true,
+                code: true,
+                receptionDate: true,
+                observations: true,
+                branch: {
+                    select: {
+                        name: true,
+                        address: true,
+                        company: { select: { name: true } },
+                    },
+                },
+                client: {
+                    select: { name: true, phone: true, email: true, address: true },
+                },
+                services: {
+                    orderBy: { id: 'asc' },
+                    select: {
+                        brand: true,
+                        model: true,
+                        color: true,
+                        appearance: true,
+                        unlockType: true,
+                        unlockCode: true,
+                        imei: true,
+                        serviceDetail: true,
+                        serviceSolution: true,
+                        cost: true,
+                        advance: true,
+                        deviceType: { select: { name: true } },
+                        technician: { select: { name: true } },
+                    },
+                },
+            },
+        })
+
+        if (!serviceRequest) {
+            return res.status(404).json({ error: 'Servicio no encontrado' })
+        }
+
+        const devices = serviceRequest.services.map((service) => ({
+            deviceType: service.deviceType?.name ?? '',
+            brand: service.brand,
+            model: service.model,
+            color: service.color,
+            appearance: service.appearance,
+            unlockType: service.unlockType,
+            unlockCode: service.unlockCode,
+            serialNumber: service.imei,
+            problem: service.serviceDetail,
+            solution: service.serviceSolution,
+            technician: service.technician?.name ?? '',
+            cost: service.cost,
+            advance: service.advance,
+            debt: Math.max(service.cost - service.advance, 0),
+        }))
+
+        const total = devices.reduce((sum, device) => sum + device.cost, 0)
+        const paid = devices.reduce((sum, device) => sum + device.advance, 0)
+
+        return res.status(200).json({
+            folio: serviceRequest.id,
+            code: serviceRequest.code,
+            receptionDate: serviceRequest.receptionDate,
+            observations: serviceRequest.observations ?? '',
+            company: { name: serviceRequest.branch.company?.name ?? '' },
+            branch: {
+                name: serviceRequest.branch.name,
+                address: serviceRequest.branch.address,
+            },
+            client: serviceRequest.client,
+            devices,
+            totals: { total, paid, debt: Math.max(total - paid, 0) },
+        })
+    } catch (error) {
+        console.error('Error generando ticket del servicio:', error)
+        return res.status(500).json({
+            error: 'Error al generar el ticket del servicio',
+        })
+    }
+}
+
+export const getServiceCatalogs = async (req: Request, res: Response) => {
+    try {
+        const scope = await resolveCompanyScope(req)
+        if (!scope) {
+            return res.status(401).json({
+                error: 'No autorizado',
+                message: 'Debes iniciar sesión para consultar catálogos.',
+            })
+        }
+
+        if (scope.isTechnician && !scope.branchId) {
+            return res.status(403).json({
+                error: 'Acceso denegado',
+                message: BRANCH_SCOPE_MESSAGE,
+            })
+        }
+
+        if (!scope.branchId) {
+            return res.status(400).json({
+                error: 'Sucursal requerida',
+                message: 'Debes seleccionar una sucursal activa para consultar catálogos.',
+            })
+        }
+
+        const companyId = scope.companyId
+        await ensureDefaultClientCatalogs({
+            companyId,
+            branchId: scope.branchId,
+        })
 
         const [
             clients,
@@ -824,6 +1687,12 @@ export const getServiceCatalogs = async (_: Request, res: Response) => {
             documentTypes,
         ] = await Promise.all([
             prisma.client.findMany({
+                where: {
+                    branch: {
+                        companyId,
+                        ...(scope.branchId ? { id: scope.branchId } : {}),
+                    },
+                },
                 orderBy: { name: 'asc' },
                 select: {
                     id: true,
@@ -837,16 +1706,24 @@ export const getServiceCatalogs = async (_: Request, res: Response) => {
                 },
             }),
             prisma.branch.findMany({
+                where: {
+                    companyId,
+                    ...(scope.branchId ? { id: scope.branchId } : {}),
+                },
                 orderBy: { name: 'asc' },
                 select: { id: true, name: true },
             }),
             prisma.status.findMany({
+                where: {
+                    branchId: scope.branchId,
+                },
                 orderBy: { name: 'asc' },
-                select: { id: true, name: true },
+                select: { id: true, name: true, colorHex: true },
             }),
             prisma.deviceType.findMany({
                 orderBy: { name: 'asc' },
                 where: {
+                    branchId: scope.branchId,
                     OR: [{ isActive: true }, { isActive: null }],
                 },
                 select: { id: true, name: true },
@@ -854,9 +1731,11 @@ export const getServiceCatalogs = async (_: Request, res: Response) => {
             prisma.user.findMany({
                 orderBy: { name: 'asc' },
                 where: {
+                    companyId,
+                    ...(scope.branchId ? { branchId: scope.branchId } : {}),
                     role: {
                         name: {
-                            in: ['Técnico', 'Tecnico'],
+                            in: ['Técnico', 'Tecnico', 'Tech'],
                         },
                     },
                 },
@@ -868,14 +1747,26 @@ export const getServiceCatalogs = async (_: Request, res: Response) => {
                 },
             }),
             prisma.location.findMany({
+                where: {
+                    branch: {
+                        companyId,
+                        ...(scope.branchId ? { id: scope.branchId } : {}),
+                    },
+                },
                 orderBy: { name: 'asc' },
                 select: { id: true, name: true, branchId: true },
             }),
             prisma.typeClient.findMany({
+                where: {
+                    branchId: scope.branchId,
+                },
                 orderBy: { name: 'asc' },
                 select: { id: true, name: true },
             }),
             prisma.documentType.findMany({
+                where: {
+                    branchId: scope.branchId,
+                },
                 orderBy: { name: 'asc' },
                 select: { id: true, name: true },
             }),
@@ -885,6 +1776,10 @@ export const getServiceCatalogs = async (_: Request, res: Response) => {
             techniciansByRole.length > 0
                 ? techniciansByRole
                 : await prisma.user.findMany({
+                      where: {
+                          companyId,
+                          ...(scope.branchId ? { branchId: scope.branchId } : {}),
+                      },
                       orderBy: { name: 'asc' },
                       select: {
                           id: true,
@@ -908,7 +1803,6 @@ export const getServiceCatalogs = async (_: Request, res: Response) => {
         console.error('Error obteniendo catálogos para servicios:', error)
         return res.status(500).json({
             error: 'Error al obtener catálogos para servicios',
-            details: error instanceof Error ? error.message : error,
         })
     }
 }

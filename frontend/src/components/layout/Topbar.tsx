@@ -1,16 +1,45 @@
 import type React from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { BellIcon, MenuIcon } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { useTranslation } from 'react-i18next'
 import { LanguajeSwitch } from '../ui/LanguajeSwitcher'
+import { Link, useNavigate } from 'react-router-dom'
+import { clearAuthSession, getAuthUser, isSuperAdminUser } from '@/lib/auth'
+import { logout as logoutRequest } from '@/services/auth/auth.api'
 
 export const Topbar: React.FC = () => {
   const { t } = useTranslation('profile')
+  const navigate = useNavigate()
   const [showMobileMenu, setShowMobilMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const user = getAuthUser()
+  const userName = user?.name || 'Usuario'
+  const userContact = user?.email || user?.username || 'Sin contacto'
+  const canManageAdmins = isSuperAdminUser(user)
+  const userInitials = useMemo(() => {
+    const normalized = userName.trim()
+    if (!normalized) return 'U'
+    const parts = normalized.split(/\s+/)
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .join('')
+  }, [userName])
+
+  const handleLogout = async () => {
+    try {
+      await logoutRequest()
+    } catch (error) {
+      console.error('No fue posible cerrar sesión en servidor:', error)
+    } finally {
+      clearAuthSession()
+      navigate('/login', { replace: true })
+    }
+  }
+
   const notifications = [
     {
       id: 1,
@@ -30,8 +59,9 @@ export const Topbar: React.FC = () => {
   ]
   return (
     <>
-      <header className="bg-white dark:bg-gray-800 shadow-sm z-10 transition-colors duration-300">
-        <div className="flex items-center px-4 py-3">
+      <header className="z-10 px-4 pt-4 md:px-6">
+        <div className="mx-auto w-full max-w-[1600px] rounded-3xl border border-gray-200/70 bg-white/95  backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-gray-700 dark:bg-gray-800/95 dark:supports-[backdrop-filter]:bg-gray-800/80 transition-colors duration-300">
+          <div className="flex items-center px-4 py-3 md:px-6">
           <button
             className="md:hidden text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             onClick={() => setShowMobilMenu(!showMobileMenu)}
@@ -86,35 +116,40 @@ export const Topbar: React.FC = () => {
                 onClick={() => setShowUserMenu(!showUserMenu)}
               >
                 <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white">
-                  <span className="text-sm font-medium">AT</span>
+                  <span className="text-sm font-medium">{userInitials}</span>
                 </div>
               </button>
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 border border-gray-200 dark:border-gray-700 z-20 transition-all duration-200 animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 border border-gray-200 dark:border-gray-700 z-20 transition-all duration-200 animate-fadeIn">
                   <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                      Admin Taller
+                      {userName}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      admin@taller.com
+                      {userContact}
                     </p>
                   </div>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  {canManageAdmins && (
+                    <Link
+                      to="/superadmin/dashboard"
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Panel superadmin
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="block w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    {t('profile:myProfile')}
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    {t('profile:logout')}
-                  </a>
+                    {t('profile:logout', { defaultValue: 'Cerrar sesión' })}
+                  </button>
                 </div>
               )}
             </div>
           </div>
+        </div>
         </div>
       </header>
       {showMobileMenu && (
@@ -128,6 +163,7 @@ export const Topbar: React.FC = () => {
           >
             <Sidebar
               className="block md:hidden"
+              collapsed={false}
               onNavigate={() => setShowMobilMenu(false)}
             />
           </div>

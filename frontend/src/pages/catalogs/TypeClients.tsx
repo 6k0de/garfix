@@ -13,12 +13,14 @@ import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Trans, useTranslation } from 'react-i18next'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useTypeClientsStore } from '@/utils/store/TypeClientsStore.tsx'
 import {
   createTypeClient,
   deleteTypeClient,
   updateTypeClient,
 } from '@/services/catalogs/typeClient.api.ts'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 
 export interface TypeClientRecord {
   id?: string
@@ -42,6 +44,7 @@ const initialValues: TypeClientPayload = {
 export const TypeClientsCatalog: React.FC = () => {
   const { t } = useTranslation(['common', 'typeClient'])
   const { typeClients, fetchTypeClients } = useTypeClientsStore()
+  const activeBranchId = useActiveBranchId()
 
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -65,8 +68,13 @@ export const TypeClientsCatalog: React.FC = () => {
   }, [currentTypeClient])
 
   useEffect(() => {
-    fetchTypeClients()
-  }, [fetchTypeClients])
+    setCurrentPage(1)
+    setIsModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setCurrentTypeClient(null)
+    if (!activeBranchId) return
+    void fetchTypeClients()
+  }, [activeBranchId, fetchTypeClients])
 
   const itemsPerPage = 5
   const totalPages = Math.max(1, Math.ceil(typeClients.length / itemsPerPage))
@@ -164,7 +172,7 @@ export const TypeClientsCatalog: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error(t('typeClient:messages.saveError'))
+      toast.error(getApiErrorMessage(error, t('typeClient:messages.saveError')))
     } finally {
       setIsSubmitting(false)
     }
@@ -184,7 +192,7 @@ export const TypeClientsCatalog: React.FC = () => {
       setCurrentPage(1)
     } catch (error) {
       console.error(error)
-      toast.error(t('typeClient:messages.deleteError'))
+      toast.error(getApiErrorMessage(error, t('typeClient:messages.deleteError')))
     } finally {
       setIsSubmitting(false)
     }
@@ -232,7 +240,7 @@ export const TypeClientsCatalog: React.FC = () => {
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/60">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('typeClient:table.columns.name')}
@@ -311,9 +319,8 @@ export const TypeClientsCatalog: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </Card>
 
-      <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+        <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-gray-700 dark:text-gray-400">
@@ -381,7 +388,8 @@ export const TypeClientsCatalog: React.FC = () => {
             </nav>
           </div>
         </div>
-      </div>
+        </div>
+      </Card>
 
       <Modal
         isOpen={isModalOpen}

@@ -1,0 +1,334 @@
+{
+  "nav": {
+    "features": "Funciones",
+    "workflow": "Flujo",
+    "pricing": "Planes",
+    "login": "Iniciar sesión",
+    "startDemo": "Comenzar"
+  },
+  "hero": {
+    "eyebrow": "Software multi-sucursal para reparación técnica",
+    "title": "Administra tu negocio de reparación desde una sola plataforma inteligente.",
+    "description": "Garfix mantiene alineadas sucursales, clientes, equipos, órdenes de servicio, técnicos y evidencias dentro de un espacio de trabajo claro y tranquilo.",
+    "primaryCta": "Comenzar",
+    "secondaryCta": "Ver funciones",
+    "audiences": {
+      "phoneRepair": "Reparación de celulares",
+      "laptopService": "Servicio de laptops",
+      "consoleRepair": "Reparación de consolas",
+      "electronicsLabs": "Laboratorios de electrónica"
+    },
+    "dashboard": {
+      "eyebrow": "Vista en vivo",
+      "title": "Una sola vista para todo el taller",
+      "stats": {
+        "active": {
+          "label": "Activos",
+          "description": "Reparaciones en proceso"
+        },
+        "branches": {
+          "label": "Sucursales",
+          "description": "Operando por separado"
+        },
+        "delivery": {
+          "label": "Entrega",
+          "description": "Actualización promedio"
+        }
+      },
+      "queue": {
+        "title": "Cola de hoy",
+        "subtitle": "Seguimiento por sucursal",
+        "statusDiagnosis": "Diagnóstico",
+        "statusBoardRepair": "Tarjeta lógica",
+        "statusReady": "Listo"
+      },
+      "branchPulse": {
+        "title": "Pulso de sucursal",
+        "branch": "Monterrey Centro",
+        "load": "72% de carga"
+      },
+      "scope": {
+        "title": "Acceso por alcance",
+        "description": "Los administradores controlan la operación completa y los técnicos solo ven el trabajo de su sucursal."
+      }
+    }
+  },
+  "value": {
+    "cards": {
+      "updates": {
+        "title": "Sin seguimiento disperso",
+        "description": "Reparaciones, notas, archivos y estatus del cliente viven en un solo lugar."
+      },
+      "branches": {
+        "title": "Control limpio por sucursal",
+        "description": "Cada sucursal conserva sus técnicos, clientes y flujo de servicio."
+      },
+      "desk": {
+        "title": "Recepción más tranquila",
+        "description": "La entrada, el seguimiento y la entrega se sienten ordenados en lugar de reactivos."
+      }
+    }
+  },
+  "features": {
+    "eyebrow": "Funciones",
+    "title": "Menos fricción. Mejor operación de reparación.",
+    "description": "Cada bloque está pensado para reducir ruido en recepción, banco de trabajo y administración.",
+    "cards": {
+      "branchCatalogs": {
+        "title": "Catálogos por sucursal",
+        "description": "Estatus, equipos, ubicaciones, clientes y técnicos permanecen dentro de la sucursal correcta."
+      },
+      "repairTracking": {
+        "title": "Seguimiento de órdenes",
+        "description": "Mueve cada equipo desde la recepción hasta la entrega con historial, técnico y estado claros."
+      },
+      "roles": {
+        "title": "Acceso por roles",
+        "description": "Los admins ven la operación completa. Los técnicos solo lo necesario para trabajar."
+      },
+      "dashboards": {
+        "title": "Tableros para dirección",
+        "description": "Consulta carga por sucursal, reparaciones activas y avance de entrega sin perder tiempo."
+      }
+    }
+  },
+  "workflow": {
+    "eyebrow": "Flujo",
+    "title": "Un proceso de reparación claro para todo el equipo.",
+    "description": "Desde recibir el equipo hasta entregarlo, el recorrido se mantiene simple y entendible.",
+    "steps": {
+      "receive": {
+        "title": "Recibir",
+        "description": "Crear la orden y registrar el equipo."
+      },
+      "assign": {
+        "title": "Asignar",
+        "description": "Enviar el trabajo al técnico y sucursal correctos."
+      },
+      "repair": {
+        "title": "Reparar",
+        "description": "Dar seguimiento a estatus, notas, costos y evidencias."
+      },
+      "deliver": {
+        "title": "Entregar",
+        "description": "Cerrar con historial completo para futuras visitas."
+      }
+    }
+  },
+  "branches": {
+    "eyebrow": "Control multi-sucursal",
+    "title": "Cada sucursal se siente local. El negocio sigue unificado.",
+    "description": "Los administradores pueden crear sucursales, asignar técnicos y vigilar servicios sin mezclar la operación diaria de una sede con otra.",
+    "items": {
+      "customers": "Clientes y equipos ligados a la sucursal correcta",
+      "technicians": "Técnicos trabajando dentro de su propio alcance operativo",
+      "realtime": "Cambio de sucursal con vistas de servicios actualizadas al instante"
+    },
+    "snapshot": {
+      "eyebrow": "Resumen para dirección",
+      "title": "Visualiza el negocio sin ruido.",
+      "collected": {
+        "label": "Cobrado",
+        "description": "Visible entre sucursales activas"
+      },
+      "load": {
+        "label": "Carga activa",
+        "description": "Pulso operativo en vivo"
+      },
+      "performance": {
+        "title": "Desempeño por sucursal",
+        "period": "Esta semana"
+      }
+    }
+  },
+  "pricing": {
+    "eyebrow": "Planes",
+    "title": "Elige el plan que encaja con tu piso de reparación.",
+    "description": "Planes simples para talleres de una sola sede, redes en crecimiento y operaciones más grandes.",
+    "billing": {
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "month": "/mes",
+      "year": "/año"
+    },
+    "currencyNote": "Precios mostrados en pesos mexicanos.",
+    "planCard": {
+      "featured": "Más popular",
+      "includedBranches": "Sucursales incluidas",
+      "extraBranchCost": "Costo por sucursal extra",
+      "choose": "Elegir {{plan}}"
+    },
+    "plans": {
+      "BASIC": {
+        "name": "Básico",
+        "tagline": "Para talleres pequeños que quieren orden",
+        "description": "Controla recepción, clientes, equipos, órdenes y evidencias desde un solo lugar.",
+        "features": {
+          "one": "1 sucursal incluida",
+          "two": "Recepción y seguimiento de reparaciones",
+          "three": "Clientes, equipos e historial de servicio",
+          "four": "QR y evidencias por orden"
+        }
+      },
+      "PRO": {
+        "name": "Pro",
+        "tagline": "Ideal para operaciones con varias sucursales",
+        "description": "Coordina técnicos, catálogos por sucursal, colas de reparación y tableros sin perder control.",
+        "features": {
+          "one": "3 sucursales incluidas",
+          "two": "Clientes y técnicos por sucursal",
+          "three": "Estatus, equipos y ubicaciones segmentados",
+          "four": "Visibilidad ejecutiva y operativa"
+        }
+      },
+      "ENTERPRISE": {
+        "name": "Enterprise",
+        "tagline": "Para redes con alto volumen de servicio",
+        "description": "Opera una red completa de reparación con más supervisión, control y escalabilidad.",
+        "features": {
+          "one": "10 sucursales incluidas",
+          "two": "Escalamiento avanzado por sede",
+          "three": "Supervisión integral del pipeline",
+          "four": "Pensado para equipos de soporte más robustos"
+        }
+      }
+    }
+  },
+  "finalCta": {
+    "eyebrow": "Cierre",
+    "title": "Opera un taller más tranquilo, con menos persecución y más claridad.",
+    "description": "Empieza hoy, elige un plan y configura tu sucursal principal en minutos.",
+    "primary": "Comenzar",
+    "secondary": "Ver planes"
+  },
+  "checkout": {
+    "back": "Volver a la landing",
+    "login": "Iniciar sesión",
+    "eyebrow": {
+      "demo": "Comenzar",
+      "checkout": "Checkout público"
+    },
+    "title": "Configura tu espacio de reparación.",
+    "description": "Elige un plan, crea la cuenta administradora y paga tu licencia con Mercado Pago para empezar a operar.",
+    "mode": {
+      "trial": "Modo prueba",
+      "public": "Checkout público"
+    },
+    "billing": {
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "month": "/mes",
+      "year": "/año"
+    },
+    "form": {
+      "companyName": {
+        "label": "Nombre del negocio",
+        "placeholder": "Northside Tech Repair",
+        "error": "Escribe el nombre de tu negocio."
+      },
+      "name": {
+        "label": "Nombre del administrador",
+        "placeholder": "Alex Rivera",
+        "error": "Escribe el nombre del responsable."
+      },
+      "email": {
+        "label": "Correo",
+        "placeholder": "owner@repairshop.com",
+        "error": "Escribe un correo válido."
+      },
+      "username": {
+        "label": "Usuario",
+        "placeholder": "Opcional"
+      },
+      "password": {
+        "label": "Contraseña",
+        "placeholder": "Mínimo 8 caracteres",
+        "error": "La contraseña debe tener al menos 8 caracteres."
+      },
+      "branchName": {
+        "label": "Nombre de la sucursal principal",
+        "placeholder": "Sucursal principal",
+        "error": "Escribe el nombre de la sucursal principal."
+      },
+      "branchAddress": {
+        "label": "Dirección de la sucursal principal",
+        "placeholder": "Calle, ciudad, estado",
+        "error": "Escribe la dirección de la sucursal principal."
+      }
+    },
+    "submit": "Pagar licencia",
+    "submitting": "Preparando pago...",
+    "selectedPlan": "Plan seleccionado",
+    "paymentStatus": {
+      "title": "Estado del cobro",
+      "description": "El pago se procesa con Mercado Pago. Tu cuenta se activa automáticamente cuando el pago queda aprobado."
+    },
+    "next": {
+      "title": "Qué sigue",
+      "one": "1. Confirmas el pago seguro en Mercado Pago.",
+      "two": "2. Si el pago se aprueba, se crea tu empresa y sucursal principal.",
+      "three": "3. Entras automáticamente al espacio de trabajo."
+    },
+    "paymentReturn": {
+      "checking": "Estamos verificando el estado de tu pago...",
+      "pending": "Tu pago está pendiente. Cuando Mercado Pago lo apruebe, tu cuenta se activará.",
+      "rejected": "Tu pago fue rechazado. Puedes revisar los datos e intentarlo de nuevo.",
+      "error": "No fue posible verificar el pago.",
+      "redirectError": "No fue posible abrir el checkout de Mercado Pago."
+    },
+    "toast": {
+      "success": "Tu espacio está listo. Bienvenido a Garfix.",
+      "genericError": "No fue posible crear la cuenta.",
+      "unexpectedError": "Ocurrió un error inesperado al crear la cuenta."
+    },
+    "return": {
+      "checking": {
+        "badge": "Verificando",
+        "title": "Verificando tu pago",
+        "description": "Estamos confirmando el estado de tu pago con Mercado Pago. Esto solo toma unos segundos…"
+      },
+      "success": {
+        "badge": "Pago aprobado",
+        "title": "¡Listo! Tu cuenta está activa",
+        "description": "Creamos tu empresa y tu sucursal principal. En un momento te llevamos a tu panel.",
+        "signingIn": "Iniciando sesión automáticamente…",
+        "cta": "Entrar a mi panel"
+      },
+      "pending": {
+        "badge": "Pago pendiente",
+        "title": "Tu pago se está procesando",
+        "description": "Mercado Pago aún no confirma el pago. En cuanto se apruebe activaremos tu cuenta y podrás entrar.",
+        "checking": "Verificando el estado…",
+        "autoRetry": "Reintentaremos automáticamente en {{seconds}}s",
+        "checkNow": "Verificar de nuevo",
+        "backHome": "Volver al inicio"
+      },
+      "rejected": {
+        "badge": "Pago rechazado",
+        "title": "No pudimos procesar tu pago",
+        "description": "El pago fue rechazado por Mercado Pago y no se realizó ningún cargo. Puedes revisar tus datos e intentarlo otra vez.",
+        "retry": "Reintentar el pago",
+        "backHome": "Volver al inicio"
+      },
+      "error": {
+        "badge": "Algo salió mal",
+        "title": "No pudimos verificar tu pago",
+        "description": "Ocurrió un problema al consultar el estado de tu pago. Espera un momento e inténtalo de nuevo.",
+        "retry": "Verificar de nuevo",
+        "backHome": "Volver al inicio"
+      },
+      "summary": {
+        "plan": "Plan",
+        "amount": "Total"
+      },
+      "toastApproved": "¡Pago aprobado! Iniciando sesión…",
+      "payAgain": "Volver a intentar el pago"
+    },
+    "redirecting": "Redirigiendo a Mercado Pago…"
+  },
+  "footer": {
+    "tagline": "La plataforma para administrar tu taller de servicio de principio a fin.",
+    "product": "Producto",
+    "rights": "Todos los derechos reservados."
+  }
+}

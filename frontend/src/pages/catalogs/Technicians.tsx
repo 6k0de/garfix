@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   PlusIcon,
   Pencil as EditIcon,
@@ -18,11 +18,16 @@ import { useBranchStore } from '@/utils/store/BranchesStore.tsx'
 import { useRoleStore } from '@/utils/store/RolesStore.tsx'
 import { useTechnicStore } from '@/utils/store/TechnicsStore.tsx'
 import { createTechnic, deleteTechnic, updateTechnics } from '@/services/catalogs/technics.api.ts.ts'
+import { resolveRoleKey } from '@/lib/auth.ts'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
+import { useActiveBranchId } from '@/lib/useActiveBranchId'
 export interface Technician {
   id?: string,
   name: string
   email?: string | undefined
+  username?: string | undefined
+  password?: string
   branchId?: string
   roleId?: string
   branch?: {
@@ -33,6 +38,7 @@ export interface Technician {
     id?: string
     name?: string
   }
+  hasCredentials?: boolean
   serviceCount?: number | undefined
 }
 export const Technicians: React.FC = () => {
@@ -40,6 +46,7 @@ export const Technicians: React.FC = () => {
   const { roles, fetchRoles } = useRoleStore()
   const {technicians, fetchTechnics} = useTechnicStore()
   const { t } = useTranslation(['common', 'technic'])
+  const activeBranchId = useActiveBranchId()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [currentTechnician, setCurrentTechnician] = useState<Technician | null>(
@@ -49,6 +56,8 @@ export const Technicians: React.FC = () => {
     id: '',
     name: '',
     email: '',
+    username: '',
+    password: '',
     roleId: '',
     branchId: '',
   })
@@ -56,30 +65,47 @@ export const Technicians: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const availableBranches = useMemo(
+    () =>
+      activeBranchId
+        ? branches.filter((branch) => branch.id === activeBranchId)
+        : branches,
+    [activeBranchId, branches]
+  )
+
   useEffect(() => {
     if (currentTechnician) {
       setFormValues({
         id: currentTechnician.id!,
         name: currentTechnician.name,
         branchId: currentTechnician.branch?.id || currentTechnician.branchId || '',
-        email: currentTechnician.email!,
+        email: currentTechnician.email || '',
+        username: currentTechnician.username || '',
+        password: '',
         roleId: currentTechnician.role?.id || currentTechnician.roleId || '',
       })
     } else {
       setFormValues({
         name: '',
-        branchId: '',
+        branchId: availableBranches[0]?.id || activeBranchId || '',
         email: '',
+        username: '',
+        password: '',
         roleId: '',
       })
     }
-  }, [currentTechnician])
+  }, [activeBranchId, availableBranches, currentTechnician])
 
   useEffect(() => {
-    fetchBranches()
-    fetchRoles()
-    fetchTechnics()
-  }, [fetchBranches, fetchRoles, fetchTechnics])
+    setCurrentPage(1)
+    setIsModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setCurrentTechnician(null)
+    if (!activeBranchId) return
+    void fetchBranches()
+    void fetchRoles()
+    void fetchTechnics()
+  }, [activeBranchId, fetchBranches, fetchRoles, fetchTechnics])
 
   const itemsPerPage = 5
   const totalPages = Math.ceil(technicians.length / itemsPerPage)
@@ -131,11 +157,17 @@ export const Technicians: React.FC = () => {
     if (!formValues.name.trim()) {
       errors.name = t('technic:form.validations.name')
     }
+    if (!formValues.email?.trim() && !formValues.username?.trim()) {
+      errors.email = t('technic:form.validations.emailOrUsername')
+    }
     if (!formValues.branchId) {
       errors.branchId = t('technic:form.validations.branch')
     }
     if (!formValues.roleId) {
       errors.roleId = t('technic:form.validations.role')
+    }
+    if (formValues.password?.trim() && formValues.password.trim().length < 8) {
+      errors.password = t('technic:form.validations.password')
     }
     return errors
   }
@@ -147,45 +179,62 @@ export const Technicians: React.FC = () => {
       return
     }
     setIsSubmitting(true)
-    console.log(formValues)
-    if(formValues.id){
-      console.log(formValues)
+    const normalizedPayload: Technician = {
+      id: formValues.id,
+      name: formValues.name.trim(),
+      email: formValues.email?.trim(),
+      username: formValues.username?.trim(),
+      branchId: formValues.branchId,
+      roleId: formValues.roleId,
+      password: formValues.password?.trim(),
+    }
+
+    if (!normalizedPayload.password) {
+      delete normalizedPayload.password
+    }
+    if (!normalizedPayload.email) {
+      delete normalizedPayload.email
+    }
+    if (!normalizedPayload.username) {
+      delete normalizedPayload.username
+    }
+
+    if(normalizedPayload.id){
       try{
-        const uTechnic = await updateTechnics(formValues)
-        console.log(uTechnic)
+        const uTechnic = await updateTechnics(normalizedPayload)
         if(uTechnic.status === 200){
           toast.success(t('technic:message.successUpdate'))
           setFormValues({
             name: '',
             branchId: '',
             email: '',
+            username: '',
+            password: '',
             roleId: '',
           })
           handleCloseModal()
           await fetchTechnics()
           setCurrentPage(1)
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error){
-        toast.error(t('technic:message.errorUpdate'))
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, t('technic:message.errorUpdate')))
       } finally {
         setIsSubmitting(false)
       }
     }else{
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const {id, ...payload} = formValues
-
-      console.log(payload)
+      const {id, ...payload} = normalizedPayload
 
       try{
         const technic = await createTechnic(payload)
-        console.log(technic)
         if(technic.id){
           toast.success(t('technic:message.successCreate'))
           setFormValues({
             name: '',
             branchId: '',
             email: '',
+            username: '',
+            password: '',
             roleId: '',
           })
           handleCloseModal()
@@ -194,7 +243,7 @@ export const Technicians: React.FC = () => {
         }
       } catch (error) {
         console.error(error)
-        toast.error(t('technic:message.errorCreate'))
+        toast.error(getApiErrorMessage(error, t('technic:message.errorCreate')))
       }finally {
         setIsSubmitting(false)
       }
@@ -203,7 +252,6 @@ export const Technicians: React.FC = () => {
   const handleDelete = async() => {
     if (!currentTechnician) return
     setIsSubmitting(true)
-    console.log(currentTechnician)
     try{
       const deletTechnic = await deleteTechnic(currentTechnician.id!)
       if(deletTechnic.status === 200){
@@ -212,6 +260,7 @@ export const Technicians: React.FC = () => {
           name: '',
           branchId: '',
           email: '',
+          password: '',
           roleId: '',
         })
         handleCloseDeleteModal()
@@ -220,11 +269,18 @@ export const Technicians: React.FC = () => {
       }
     } catch(error){
       console.error(error)
-      toast.error(t('technic:message.errorDelete'))
+      toast.error(getApiErrorMessage(error, t('technic:message.errorDelete')))
     }finally {
       setIsSubmitting(false)
     }
   }
+
+  const technicianRoleOptions = roles
+    .filter((rol) => {
+      const key = resolveRoleKey(rol.name)
+      return key === 'tecnico' || key === 'tech'
+    })
+    .flatMap((rol) => (rol.id ? [{ value: rol.id, label: rol.name }] : []))
 
   const formFields = [
     {
@@ -238,14 +294,30 @@ export const Technicians: React.FC = () => {
       name: 'email',
       label: t('technic:form.formNewFields.email'),
       type: 'text' as const,
+      required: false,
       placeholder: t('technic:form.formNewFields.emailPlaceholder'),
+    },
+    {
+      name: 'username',
+      label: t('technic:form.formNewFields.username'),
+      type: 'text' as const,
+      required: false,
+      placeholder: t('technic:form.formNewFields.usernamePlaceholder'),
+    },
+    {
+      name: 'password',
+      label: t('technic:form.formNewFields.password'),
+      type: 'password' as const,
+      placeholder: currentTechnician
+        ? t('technic:form.formNewFields.passwordEditPlaceholder')
+        : t('technic:form.formNewFields.passwordPlaceholder'),
     },
     {
       name: 'branchId',
       label: t('technic:form.formNewFields.branch'),
       type: 'select' as const,
       required: true,
-      options: branches.flatMap((branch) =>
+      options: availableBranches.flatMap((branch) =>
         branch.id ? [{ value: branch.id, label: branch.name }] : []
       ),
     },
@@ -254,9 +326,7 @@ export const Technicians: React.FC = () => {
       label: t('technic:form.formNewFields.role'),
       type: 'select' as const,
       required: true,
-      options: roles.flatMap((rol) =>
-        rol.id ? [{ value: rol.id, label: rol.name }] : []
-      ),
+      options: technicianRoleOptions,
     },
   ]
 
@@ -285,7 +355,7 @@ export const Technicians: React.FC = () => {
       <Card className="py-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/60">
               <tr>
                 <th
                   scope="col"
@@ -356,6 +426,18 @@ export const Technicians: React.FC = () => {
                           />
                           <span>{technician.email}</span>
                         </div>
+                      )}
+                      {technician.username && (
+                        <div className="flex items-center">
+                          <UserIcon
+                            size={14}
+                            className="mr-1.5 text-gray-500 dark:text-gray-400"
+                          />
+                          <span>@{technician.username}</span>
+                        </div>
+                      )}
+                      {!technician.email && !technician.username && (
+                        <span className="text-gray-400">—</span>
                       )}
                     </div>
                   </td>

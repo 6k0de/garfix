@@ -26,8 +26,8 @@ const buildDefaultNewClient = (
   phone: '',
   email: '',
   address: '',
-  typeClientId: catalogs.typeClients[0]?.id || '',
-  documentTypeId: catalogs.documentTypes[0]?.id || '',
+  typeClientId: '',
+  documentTypeId: '',
   branchId: preferredBranchId || catalogs.branches[0]?.id || '',
 })
 
@@ -125,25 +125,17 @@ export const ClientFormStep: React.FC<ClientFormStepProps> = ({
   const validateNewClient = () => {
     const nextErrors: Record<string, string> = {}
 
+    // Solo nombre y teléfono son obligatorios. El correo, la dirección, el tipo de
+    // cliente y el tipo de documento son opcionales.
     if (!newClient.name.trim()) {
       nextErrors.name = t('services:first-step.validations.name')
     }
     if (!newClient.phone.trim()) {
       nextErrors.phone = t('services:first-step.validations.phone')
     }
-    if (!newClient.email.trim()) {
+    // Correo opcional: solo se valida el formato si se escribió algo.
+    if (newClient.email.trim() && !/\S+@\S+\.\S+/.test(newClient.email)) {
       nextErrors.email = t('services:first-step.validations.email')
-    } else if (!/\S+@\S+\.\S+/.test(newClient.email)) {
-      nextErrors.email = t('services:first-step.validations.email')
-    }
-    if (!newClient.address.trim()) {
-      nextErrors.address = 'La dirección es requerida'
-    }
-    if (!newClient.typeClientId) {
-      nextErrors.typeClientId = 'Selecciona un tipo de cliente'
-    }
-    if (!newClient.documentTypeId) {
-      nextErrors.documentTypeId = 'Selecciona un tipo de documento'
     }
     if (!newClient.branchId) {
       nextErrors.branchId = 'Selecciona una sucursal'
@@ -342,7 +334,7 @@ export const ClientFormStep: React.FC<ClientFormStepProps> = ({
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   {t('services:first-step.labelInput.newLabelUserEmail')}{' '}
-                  <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-gray-400">(opcional)</span>
                 </label>
                 <input
                   type="email"
@@ -367,7 +359,7 @@ export const ClientFormStep: React.FC<ClientFormStepProps> = ({
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   {t('services:first-step.labelInput.newLabelUserAddress')}{' '}
-                  <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-gray-400">(opcional)</span>
                 </label>
                 <input
                   type="text"
@@ -390,7 +382,8 @@ export const ClientFormStep: React.FC<ClientFormStepProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tipo de cliente <span className="text-red-500">*</span>
+                  Tipo de cliente{' '}
+                  <span className="text-xs font-normal text-gray-400">(opcional)</span>
                 </label>
                 <Select
                   value={newClient.typeClientId}
@@ -421,7 +414,8 @@ export const ClientFormStep: React.FC<ClientFormStepProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tipo de documento <span className="text-red-500">*</span>
+                  Tipo de documento{' '}
+                  <span className="text-xs font-normal text-gray-400">(opcional)</span>
                 </label>
                 <Select
                   value={newClient.documentTypeId}

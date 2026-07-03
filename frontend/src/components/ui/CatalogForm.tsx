@@ -8,10 +8,34 @@ import {
   SelectValue,
 } from './Select'
 import { useTranslation } from 'react-i18next'
+import { normalizeHexColor } from '@/lib/color'
+
+const COLOR_SWATCHES = [
+  '#0EA5E9',
+  '#14B8A6',
+  '#22C55E',
+  '#EAB308',
+  '#F97316',
+  '#EF4444',
+  '#EC4899',
+  '#8B5CF6',
+  '#6366F1',
+  '#64748B',
+]
+
+const normalizeColorDraft = (value: string) => {
+  const clean = value.toUpperCase().replace(/[^#0-9A-F]/g, '')
+  if (!clean) {
+    return ''
+  }
+
+  const withoutHash = clean.replace(/#/g, '')
+  return `#${withoutHash.slice(0, 6)}`
+}
 interface FormField {
   name: string
   label: string
-  type: 'text' | 'textarea' | 'select'
+  type: 'text' | 'textarea' | 'select' | 'color' | 'password'
   required?: boolean
   options?: {
     value: string
@@ -80,15 +104,52 @@ export const CatalogForm = <TValues extends object>({
                 ))}
               </SelectContent>
             </Select>
+          ) : field.type === 'color' ? (
+            <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-3 dark:border-gray-700 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="color"
+                  id={field.name}
+                  name={field.name}
+                  value={normalizeHexColor(getFieldValue(field.name))}
+                  onChange={(e) => onChange(field.name, e.target.value.toUpperCase())}
+                  className="h-11 w-16 cursor-pointer rounded-lg border border-gray-300 bg-white p-1 dark:border-gray-600 dark:bg-gray-900"
+                />
+                <input
+                  type="text"
+                  value={getFieldValue(field.name)}
+                  onChange={(e) =>
+                    onChange(field.name, normalizeColorDraft(e.target.value))
+                  }
+                  required={field.required}
+                  placeholder={field.placeholder || '#64748B'}
+                  maxLength={7}
+                  className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm uppercase focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800"
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {COLOR_SWATCHES.map((swatch) => (
+                  <button
+                    key={`${field.name}-${swatch}`}
+                    type="button"
+                    onClick={() => onChange(field.name, swatch)}
+                    className="h-7 w-7 rounded-full border border-white shadow-sm ring-1 ring-black/10 transition-transform hover:scale-105 dark:border-gray-800 dark:ring-white/15"
+                    style={{ backgroundColor: swatch }}
+                    aria-label={`Seleccionar color ${swatch}`}
+                  />
+                ))}
+              </div>
+            </div>
           ) : (
             <input
-              type="text"
+              type={field.type === 'password' ? 'password' : 'text'}
               id={field.name}
               name={field.name}
               value={getFieldValue(field.name)}
               onChange={(e) => onChange(field.name, e.target.value)}
               required={field.required}
               placeholder={field.placeholder}
+              autoComplete={field.type === 'password' ? 'new-password' : undefined}
               className="bg-white dark:bg-gray-800 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           )}

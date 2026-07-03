@@ -11,11 +11,13 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
+import { getApiErrorMessage } from '@/lib/apiError'
 import {
   getServiceEvidenceByQr,
   uploadServiceEvidenceByQr,
 } from '@/services/service/service.api'
 import { resolveApiAssetUrl } from '@/lib/api'
+import { getStatusTagStyle } from '@/lib/color'
 import type { ServiceEvidenceResponse } from './service.types'
 
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -63,10 +65,7 @@ export const ServiceEvidencePage = () => {
       setData(response)
     } catch (error: any) {
       console.error(error)
-      const message =
-        error?.response?.data?.error ||
-        'No fue posible cargar las evidencias para este QR.'
-      toast.error(message)
+      toast.error(getApiErrorMessage(error, 'No fue posible cargar las evidencias para este QR.'))
       setData(null)
     } finally {
       setIsLoading(false)
@@ -122,11 +121,7 @@ export const ServiceEvidencePage = () => {
       await loadEvidence()
     } catch (error: any) {
       console.error(error)
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        'No fue posible subir las imágenes.'
-      toast.error(message)
+      toast.error(getApiErrorMessage(error, 'No fue posible subir las imágenes.'))
     } finally {
       setIsUploading(false)
     }
@@ -155,7 +150,6 @@ export const ServiceEvidencePage = () => {
     )
   }
 
-  console.log(data)
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200 px-4 py-6 sm:px-8">
       <Toaster />
@@ -218,7 +212,12 @@ export const ServiceEvidencePage = () => {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-gray-500">Estatus</p>
-                  <p className="text-sm font-semibold text-gray-900">{data.serviceRequest.status.name}</p>
+                  <span
+                    className="mt-1 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                    style={getStatusTagStyle(data.serviceRequest.status.colorHex)}
+                  >
+                    {data.serviceRequest.status.name}
+                  </span>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-gray-500">Recepción</p>

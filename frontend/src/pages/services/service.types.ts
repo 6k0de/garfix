@@ -1,6 +1,7 @@
 export interface CatalogOption {
   id: string
   name: string
+  colorHex?: string
 }
 
 export interface ServiceClientRecord {
@@ -35,6 +36,8 @@ export interface ServiceDeviceFormValue {
   serialNumber: string
   color: string
   appearance: string
+  unlockType: string
+  unlockCode: string
   problem: string
   solution: string
   cost: string
@@ -64,6 +67,35 @@ export interface ServiceDetailsFormValue {
   qrCode: string
 }
 
+export type RefundMethod = 'CASH' | 'BANK'
+
+export interface ServiceCancellationPayload {
+  total: number
+  totalPaid: number
+  debt: number
+  amount: number
+  hasRefund: boolean
+  refundMethod?: RefundMethod | null
+  cashFromBox?: boolean | null
+  bankAccount?: string | null
+  bankFromBox?: boolean | null
+  sourceBoxName?: string | null
+  notes?: string | null
+}
+
+export interface ServiceCancellationRecord extends ServiceCancellationPayload {
+  id: string
+  statusId: string
+  refundMethod: RefundMethod | null
+  cashFromBox: boolean | null
+  bankAccount: string | null
+  bankFromBox: boolean | null
+  sourceBoxName: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ServiceFormData {
   client: ServiceClientRecord | null
   clientId: string | null
@@ -91,6 +123,8 @@ export interface ServiceDeviceRecord {
   serialNumber: string
   color: string
   appearance: string
+  unlockType: string
+  unlockCode: string
   problem: string
   solution: string
   cost: number
@@ -106,6 +140,7 @@ export interface ServiceDetailResponse {
   client: ServiceClientRecord
   devices: ServiceDeviceRecord[]
   serviceDetails: ServiceDetailsFormValue
+  cancellation: ServiceCancellationRecord | null
 }
 
 export interface CreateServicePayload {
@@ -115,8 +150,8 @@ export interface CreateServicePayload {
     phone: string
     email?: string | null
     address?: string | null
-    typeClientId: string
-    documentTypeId: string
+    typeClientId?: string | null
+    documentTypeId?: string | null
     branchId: string
   } | null
   devices: Array<{
@@ -126,6 +161,8 @@ export interface CreateServicePayload {
     serialNumber?: string | null
     color?: string | null
     appearance?: string | null
+    unlockType?: string | null
+    unlockCode?: string | null
     problem: string
     solution?: string | null
     cost: number
@@ -143,6 +180,7 @@ export interface CreateServicePayload {
     code?: string | null
     qrCode?: string | null
   }
+  cancellation?: ServiceCancellationPayload | null
 }
 
 export interface ServiceMutationResponse {
@@ -162,6 +200,7 @@ export interface ServiceListRecord {
   technician: string
   receptionDate: string
   status: string
+  statusColor?: string
   qrCode: string
   devicesCount: number
 }
@@ -186,6 +225,7 @@ export interface ServiceEvidenceResponse {
     status: {
       id: string
       name: string
+      colorHex?: string
     }
     branch: {
       id: string

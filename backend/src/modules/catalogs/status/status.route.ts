@@ -1,18 +1,19 @@
 import { Router } from 'express'
+import { authRequired } from '../../../lib/auth.js'
 import * as s from './status.controller.js'
 
 const st = Router()
 
 //GET
-st.get('/select', s.getAllStatus)
+st.get('/select', authRequired, s.getAllStatus)
 
 //POST
-st.post('/create', s.createStatus)
+st.post('/create', authRequired, s.createStatus)
 
 //PUT
-st.put('/update', s.updateStatus)
+st.put('/update', authRequired, s.updateStatus)
 
 //DELETE
-st.delete('/status/:id', s.deleteStatus)
+st.delete('/status/:id', authRequired, s.deleteStatus)
 
 export default st

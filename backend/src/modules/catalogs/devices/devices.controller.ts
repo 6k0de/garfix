@@ -2,6 +2,50 @@ import { Request, Response } from 'express'
 import { Prisma } from '@prisma/client'
 import { deviceSchema, updateDeviceSchema } from './device.schema.js'
 import { prisma } from '../../../lib/prisma.js'
+import { resolveCompanyScope } from '../../../lib/companyScope.js'
+import { sendError } from '../../../lib/httpErrors.js'
+
+const BRANCH_SCOPE_REQUIRED_MESSAGE =
+  'Debes seleccionar una sucursal activa para administrar dispositivos.'
+
+const resolveDeviceScope = async (req: Request, res: Response) => {
+  const scope = await resolveCompanyScope(req)
+  if (!scope) {
+    res.status(401).json({
+      error: 'No autorizado',
+      message: 'Debes iniciar sesión para administrar dispositivos.',
+    })
+    return null
+  }
+
+  if (!scope.branchId) {
+    res.status(400).json({
+      error: 'Sucursal requerida',
+      message: BRANCH_SCOPE_REQUIRED_MESSAGE,
+    })
+    return null
+  }
+
+  const ownedBranch = await prisma.branch.findFirst({
+    where: {
+      id: scope.branchId,
+      companyId: scope.companyId,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!ownedBranch) {
+    res.status(403).json({
+      error: 'Acceso denegado',
+      message: 'La sucursal activa no pertenece a tu empresa.',
+    })
+    return null
+  }
+
+  return scope
+}
 
 export const createDevice = async(req: Request, res: Response) => {
   const device = deviceSchema.safeParse(req.body)
@@ -14,10 +58,16 @@ export const createDevice = async(req: Request, res: Response) => {
   const { name, description } = device.data
 
   try {
+    const scope = await resolveDeviceScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
     const device = await prisma.deviceType.create({
       data: {
         name,
-        description
+        description: description?.trim() || null,
+        branchId: scope.branchId,
       },
       select: {
         id: true,
@@ -32,24 +82,39 @@ export const createDevice = async(req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe un registro con esos datos únicos.',
-          meta: err.meta,
         })
       }
       // Ej: FK inválida (P2003) si companyId no existe
       if (err.code === 'P2003') {
         return res.status(400).json({
           error: 'Relación inválida',
-          message: 'El dispositivo especificado no existe.',
-          meta: err.meta,
+          message: 'La sucursal seleccionada no existe.',
         })
       }
     }
+
+    console.error('Error creando dispositivo:', err)
+    return res.status(500).json({ error: 'Error interno del servidor' })
   }
 }
 
-export const getAllDevices = async(_: Request, res: Response) => {
+export const getAllDevices = async(req: Request, res: Response) => {
   try{
+    const scope = await resolveDeviceScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
     const devices = await prisma.deviceType.findMany({
+      where: {
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
       select: {
         id: true,
         name: true,
@@ -64,17 +129,13 @@ export const getAllDevices = async(_: Request, res: Response) => {
     const result = devices.map((device) => ({
       id: device.id,
       name: device.name,
-      description: device.description,
+      description: device.description ?? '',
       devicesCount: device._count?.services ?? 0
     }))
 
     return res.json(result)
-  } catch (error){
-    console.error('Error obteniendo dispositivos:', error);
-    return res.status(500).json({
-      error: 'Error al obtener dispositivos',
-      details: error instanceof Error ? error.message : error,
-    });
+  } catch (error) {
+    return sendError(res, error, 'No fue posible obtener los dispositivos.')
   }
 }
 
@@ -87,11 +148,44 @@ export const updateDevice = async(req: Request, res: Response) => {
   }
 
   const {id, ...data} = uDevice.data
+  if (!id) {
+    return res.status(400).json({ error: 'El id del dispositivo es requerido' })
+  }
 
   try {
+    const scope = await resolveDeviceScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
+    const ownedDevice = await prisma.deviceType.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedDevice) {
+      return res.status(404).json({ error: 'Dispositivo no encontrado' })
+    }
+
+    const updateData: Prisma.DeviceTypeUpdateInput = {}
+    if (typeof data.name === 'string') {
+      updateData.name = data.name
+    }
+    if (typeof data.description === 'string') {
+      updateData.description = data.description.trim() || null
+    }
+
     await prisma.deviceType.update({
       where: {id},
-      data
+      data: updateData,
     })
 
     return res.status(200).json()
@@ -101,14 +195,12 @@ export const updateDevice = async(req: Request, res: Response) => {
         return res.status(409).json({
           error: 'Conflicto',
           message: 'Ya existe un registro con esos datos únicos.',
-          meta: err.meta,
         })
       }
       if (err.code === 'P2003') {
         return res.status(400).json({
           error: 'Relación inválida',
           message: 'El Dispositivo especificado no existe.',
-          meta: err.meta,
         })
       }
     }
@@ -124,6 +216,28 @@ export const deleteDevice = async(req: Request, res: Response) => {
   }
 
   try {
+    const scope = await resolveDeviceScope(req, res)
+    if (!scope?.branchId) {
+      return
+    }
+
+    const ownedDevice = await prisma.deviceType.findFirst({
+      where: {
+        id,
+        branchId: scope.branchId,
+        branch: {
+          companyId: scope.companyId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!ownedDevice) {
+      return res.status(404).json({ error: 'Dispositivo no encontrado' })
+    }
+
     await prisma.deviceType.delete({
       where: {id}
     })
@@ -132,7 +246,7 @@ export const deleteDevice = async(req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2025') {
-        return res.status(404).json({ error: 'Dispositivo no encontrada' })
+        return res.status(404).json({ error: 'Dispositivo no encontrado' })
       }
     }
     console.error('error al eliminar el Dispositivo', err)
